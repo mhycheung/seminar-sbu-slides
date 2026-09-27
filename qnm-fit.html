@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>qnm-fit</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="common/deck.css">
+<link rel="stylesheet" href="parts/qnm-fit/part.css">
+</head>
+<body>
+<div class="deck">
+<!-- part: qnm-fit -->
+<script src="parts/qnm-fit/assets/qnm-fit-data.js"></script>
+<section class="slide" id="qnm-fit-waveform">
+  <h1 class="title">What quasi-normal modes are excited in the ringdown?</h1>
+  <canvas id="qnm-fit-wave-canvas" class="qnm-fit-canvas" style="left:140px; top:230px; width:1680px; height:700px"></canvas>
+  <div class="qnm-fit-label" style="left:980px; top:990px">$t / M_f$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:130px; top:580px">$\mathrm{Re}\, h_{22}$</div>
+</section>
+
+<section class="slide" id="qnm-fit-sweep">
+  <canvas id="qnm-fit-left-canvas" class="qnm-fit-canvas" style="left:150px; top:140px; width:880px; height:760px"></canvas>
+  <canvas id="qnm-fit-right-canvas" class="qnm-fit-canvas" style="left:1150px; top:140px; width:720px; height:760px"></canvas>
+  <div class="qnm-fit-label" style="left:590px; top:960px">$t / M_f$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:150px; top:520px">$\mathrm{Re}\, h_{22}$</div>
+  <div class="qnm-fit-label" style="left:1510px; top:960px">$M_f\, \omega_r$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:1100px; top:520px">$-M_f\, \omega_i$</div>
+  <div id="qnm-fit-t0" class="qnm-fit-t0"></div>
+  <div id="qnm-fit-220" class="qnm-fit-220">$\omega_{220}$</div>
+</section>
+</div>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/auto-render.min.js"></script>
+<script src="common/deck.js"></script>
+<script src="parts/qnm-fit/part.js"></script>
+<script>Deck.start();</script>
+</body>
+</html>

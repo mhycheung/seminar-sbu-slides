@@ -15,10 +15,10 @@ iframe { flex: 1; border: 0; width: 100%; }
 </style>
 </head>
 <body>
-<nav><a data-page="example" href="#example">example</a><a data-page="gw-ring" href="#gw-ring">gw-ring</a><a data-page="ringdown" href="#ringdown">ringdown</a><a data-page="title" href="#title">title</a><a class="open" id="open" href="#" target="_blank">open alone</a></nav>
+<nav><a data-page="example" href="#example">example</a><a data-page="gw-ring" href="#gw-ring">gw-ring</a><a data-page="qnm-fit" href="#qnm-fit">qnm-fit</a><a data-page="ringdown" href="#ringdown">ringdown</a><a data-page="title" href="#title">title</a><a class="open" id="open" href="#" target="_blank">open alone</a></nav>
 <iframe id="view"></iframe>
 <script>
-var pages = ["example", "gw-ring", "ringdown", "title"];
+var pages = ["example", "gw-ring", "qnm-fit", "ringdown", "title"];
 function show() {
   var name = location.hash.slice(1);
   if (pages.indexOf(name) < 0) name = pages[0];

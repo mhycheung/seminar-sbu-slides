@@ -1,0 +1,29 @@
+.qnm-fit-canvas {
+  position: absolute;
+}
+
+.qnm-fit-label {
+  position: absolute;
+  font-size: 40px;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+.qnm-fit-ylabel {
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.qnm-fit-t0 {
+  position: absolute;
+  left: 590px;
+  top: 90px;
+  transform: translate(-50%, -50%);
+  font-size: 44px;
+  white-space: nowrap;
+}
+
+.qnm-fit-220 {
+  position: absolute;
+  font-size: 36px;
+  white-space: nowrap;
+}
