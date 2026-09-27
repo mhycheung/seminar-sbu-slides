@@ -1,0 +1,14 @@
+.qnm-amp-abs { position: absolute; }
+
+.qnm-amp-axlabel {
+  position: absolute;
+  font-size: 44px;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+#qnm-amp-3d-canvas { cursor: grab; }
+#qnm-amp-3d-canvas.qnm-amp-drag { cursor: grabbing; }
+
+.qnm-amp-cite { left: 180px; width: 1560px; top: 1030px; text-align: center; }
