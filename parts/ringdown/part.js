@@ -5,17 +5,21 @@
 //   h_22 at the same time, face-on (circular polarisation), in the style of the gw-ring part.
 //   Stage 0: the binary before merger. Stage 1: inspiral up to the common horizon, then
 //   pause. Stage 2: ringdown at half the stage-1 speed.
-// ringdown-quad: the quadrupole picture. Left, the same inspiral, frozen at merger. Right,
+// ringdown-quad: the quadrupole picture. Left, a shorter inspiral, frozen at merger. Right,
 //   a symmetric l = m = 2 blob; zoom; horizon; ringdown; light ring; EHT image; complex
 //   plane with the 220 and 221 frequencies.
 // ringdown-sum: the full ringdown = 22 + 33 + 44 + ..., with the complex plane.
 //
+// From ringdown-quad on, shapes are drawn soft: black inside, fading to white outside
+// (opacity exp(-((rho/r - 1)/SOFT)^2)). The remnant horizon is a crisp black disc of the
+// animation's final radius R_final, the light ring a dashed circle at LR R_final.
 // The quadrupole pictures are schematic: blob r(phi) = R [1 + eps A cos(m (phi - angle))].
 (function () {
   "use strict";
 
   var D = RINGDOWN_DATA;
-  var T_START = 584;        // M; start of the inspiral, about 2.8 orbits before the common horizon
+  var T_START = 584;        // M; start of the inspiral on ringdown-merger (about 2.8 orbits before merger)
+  var T_START_Q = 677.5;    // M; start of the inspiral on ringdown-quad (two orbits before merger)
   var T_RD_END = 830;       // M; end of the looped merger-to-ringdown animation
   var L = 7.0;              // half-width of the merger view, in M
   var SPEED_INSPIRAL = 60;  // M per second
@@ -27,15 +31,16 @@
   var DOT = 11;             // test-mass radius, px
   var H = 0.26;             // strain shown at the peak of |h_22|
   var EPS = 0.35;           // quadrupole blob deformation at merger (as the merger view)
-  var HOR = 0.6;            // horizon radius / blob mean radius (schematic)
-  var ZOOM = 2.2;           // zoom of the quadrupole view
-  var GREY = "#a6a6a6";     // blob colour once the horizon is drawn over it
-  var MF = 0.95;            // remnant mass in units of the initial total mass (schematic)
-  // QNM frequencies M_f omega for a_f = 0.69 (qnm package 0.4.4; see the task log).
+  var SOFT = 0.6;           // width of the soft edge, in units of the local radius
+  var LR = 1.5;             // light-ring radius / horizon radius (schematic)
+  var ZOOM = 1.3;           // zoom of the quadrupole view
+  // Remnant of the run: M_f = 0.9555 M, a_f = 0.6870 (tasks/t04-ringdown/qnm_values.py).
+  // QNM frequencies M_f omega at a_f = 0.6870 (qnm package 0.4.4).
+  var MF = 0.9555;
   var QNM = {
-    "220": [0.5282, -0.0812], "221": [0.5165, -0.2454],
-    "330": [0.8372, -0.0833], "331": [0.8308, -0.2508],
-    "440": [1.1339, -0.0847], "441": [1.1293, -0.2546]
+    "220": [0.5270, -0.0813], "221": [0.5151, -0.2457],
+    "330": [0.8353, -0.0834], "331": [0.8289, -0.2511],
+    "440": [1.1314, -0.0848], "441": [1.1267, -0.2550]
   };
 
   // ---------------- data ----------------
@@ -140,6 +145,54 @@
     });
   }
 
+  // Soft opacity from q = rho / r (1 inside, Gaussian fall-off outside).
+  function softA(q) { if (q <= 1) return 1; var u = (q - 1) / SOFT; return u > 2.6 ? 0 : Math.exp(-u * u); }
+
+  // Soft layer: opacity alphaAt(x, y) (CSS px, y down) of black, evaluated at half the
+  // backing resolution and scaled up with smoothing (the picture has no hard edges).
+  function renderSoft(c, alphaAt) {
+    var k = fit(c), W = c.width, H2 = c.height, w = Math.ceil(W / 2), h = Math.ceil(H2 / 2);
+    var o = c.ringdownSoft;
+    if (!o || o.width !== w || o.height !== h) {
+      o = c.ringdownSoft = document.createElement("canvas");
+      o.width = w; o.height = h;
+    }
+    var octx = o.getContext("2d"), img = octx.createImageData(w, h), p = img.data;
+    for (var j = 0; j < h; j++) {
+      var y = (2 * j + 1) / k;
+      for (var i = 0; i < w; i++) {
+        var a = alphaAt((2 * i + 1) / k, y);
+        if (a > 0) p[4 * (j * w + i) + 3] = Math.round(255 * a);
+      }
+    }
+    octx.putImageData(img, 0, 0);
+    var ctx = c.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, W, H2);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(o, 0, 0, W, H2);
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    return ctx;
+  }
+
+  // Soft merger view: the same field, drawn with opacity softA(F^(-1/2)).
+  function SoftMergerView(c, half, ox, oy) {
+    var last = null;
+    return {
+      draw: function (t) {
+        fit(c);
+        var key = t + ":" + c.width;
+        if (key === last) return;
+        last = key;
+        var m = model(t), cw = c.offsetWidth, ch = c.offsetHeight, sc = cw / (2 * half);
+        renderSoft(c, function (x, y) {
+          var F = field(m, ox + (x - cw / 2) / sc, oy - (y - ch / 2) / sc);
+          return F >= 1 ? 1 : F < 0.03 ? 0 : softA(1 / Math.sqrt(F));
+        });
+      }
+    };
+  }
+
   // A merger view on canvas c: half-width `half` (M) about the point (ox, oy) (M).
   // Black where F >= 1, transparent elsewhere; the edge is anti-aliased from the field
   // gradient, so it stays sharp at any resolution. Redraws only when t or the size changes.
@@ -182,38 +235,32 @@
   }
 
   // ---------------- quadrupole blob, horizon, light ring ----------------
-  // Blob about (cx, cy) (CSS px, y down) of mean radius R: r(phi) = R [1 + e cos(m (phi - ang))],
-  // phi counter-clockwise on screen.
-  function blob(ctx, cx, cy, R, m, e, ang, colour) {
-    ctx.beginPath();
-    for (var i = 0; i <= 360; i++) {
-      var p = 2 * Math.PI * i / 360, r = R * (1 + e * Math.cos(m * (p - ang)));
-      if (i === 0) ctx.moveTo(cx + r * Math.cos(p), cy - r * Math.sin(p));
-      else ctx.lineTo(cx + r * Math.cos(p), cy - r * Math.sin(p));
-    }
-    ctx.closePath();
-    ctx.fillStyle = colour;
-    ctx.fill();
-  }
-
-  // Blob (black, turning grey as the horizon appears), the horizon (black disc) with
-  // opacity hor, and the light ring (dashed circle at the blob's mean radius) with opacity lr.
-  function hole(ctx, cx, cy, R, m, e, ang, hor, lr) {
-    var g = Math.round(parseInt(GREY.slice(1, 3), 16) * hor);
-    blob(ctx, cx, cy, R, m, e, ang, "rgb(" + g + "," + g + "," + g + ")");
-    var a0 = ctx.globalAlpha;
+  // Soft blob on canvas c about (cx, cy) (CSS px, y down), core radius
+  // r(phi) = R [1 + e cos(m (phi - ang))], phi counter-clockwise on screen, opacity scaled by
+  // `op`; then the horizon (crisp black disc of radius R, white edge) with opacity hor, and
+  // the light ring (dashed circle at LR R) with opacity lr.
+  function hole(c, cx, cy, R, m, e, ang, op, hor, lr) {
+    var rmax = R * (1 + Math.abs(e)) * (1 + 2.6 * SOFT);
+    var ctx = renderSoft(c, function (x, y) {
+      var dx = x - cx, dy = cy - y, rho = Math.sqrt(dx * dx + dy * dy);
+      if (rho > rmax) return 0;
+      var r = R * (1 + e * Math.cos(m * (Math.atan2(dy, dx) - ang)));
+      return op * softA(rho / r);
+    });
     if (hor > 0) {
-      ctx.globalAlpha = a0 * hor;
-      ctx.beginPath(); ctx.arc(cx, cy, HOR * R, 0, 2 * Math.PI);
+      ctx.globalAlpha = hor;
+      ctx.beginPath(); ctx.arc(cx, cy, R + 2, 0, 2 * Math.PI);
+      ctx.lineWidth = 4; ctx.strokeStyle = "#fff"; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI);
       ctx.fillStyle = "#000"; ctx.fill();
     }
     if (lr > 0) {
-      ctx.globalAlpha = a0 * lr;
-      ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+      ctx.globalAlpha = lr;
+      ctx.beginPath(); ctx.arc(cx, cy, LR * R, 0, 2 * Math.PI);
       ctx.setLineDash([16, 12]); ctx.lineWidth = 4; ctx.strokeStyle = "#000"; ctx.stroke();
       ctx.setLineDash([]);
     }
-    ctx.globalAlpha = a0;
+    ctx.globalAlpha = 1;
   }
 
   // l = m = 2 blob of the NR remnant at time t: amplitude and phase of psi4_22, as in the
@@ -230,27 +277,28 @@
   }
 
   // ---------------- complex plane ----------------
-  // Axes in the box element (CSS px), x = omega_R in [0, xmax], y = -omega_I in [0, ymax].
-  function Plane(box, xmax, ymax, modes) {
+  // In the style of the qnm-fit part: axes box with numbered ticks, x = M_f omega_r,
+  // y = -M_f omega_i, Kerr frequencies as crosses labelled omega_lmn. Fills the box element.
+  function Plane(box, xr, yr, xticks, yticks, modes) {
     var c = document.createElement("canvas");
     box.appendChild(c);
-    var W = box.offsetWidth, Hh = box.offsetHeight, ml = 80, mb = 70, mt = 40, mr = 90;
-    function X(x) { return ml + (W - ml - mr) * x / xmax; }
-    function Y(y) { return Hh - mb - (Hh - mb - mt) * y / ymax; }
-    function label(tex, x, y) {
+    var W = box.offsetWidth, Hh = box.offsetHeight, L0 = 110, R1 = W - 20, T0 = 25, B0 = Hh - 60;
+    function X(x) { return L0 + (x - xr[0]) / (xr[1] - xr[0]) * (R1 - L0); }
+    function Y(y) { return B0 - (y - yr[0]) / (yr[1] - yr[0]) * (B0 - T0); }
+    function label(tex, x, y, cls) {
       var d = document.createElement("div");
-      d.className = "ringdown-plane-label";
+      d.className = cls;
       d.style.left = x + "px"; d.style.top = y + "px";
       katex.render(tex, d);
       box.appendChild(d);
       return d;
     }
-    label("\\omega_R", W - mr + 45, Y(0));
-    label("-\\omega_I", X(0), mt - 10);
+    label("M_f\\, \\omega_r", (L0 + R1) / 2, Hh + 45, "ringdown-plane-label");
+    label("-M_f\\, \\omega_i", -45, (T0 + B0) / 2, "ringdown-plane-label ringdown-plane-ylabel");
     var tags = {};
     modes.forEach(function (k) {
       var w = QNM[k];
-      tags[k] = label(k, X(w[0]) + 52, Y(-w[1]) - 4);
+      tags[k] = label("\\omega_{" + k + "}", X(w[0]) + 14, Y(-w[1]) - 58, "ringdown-plane-q");
       tags[k].style.transition = "opacity 0.5s";
     });
     return {
@@ -259,26 +307,37 @@
         var k = fit(c), ctx = c.getContext("2d"), shown = this.shown;
         ctx.setTransform(k, 0, 0, k, 0, 0);
         ctx.clearRect(0, 0, W, Hh);
-        ctx.strokeStyle = "#000"; ctx.fillStyle = "#000"; ctx.lineWidth = 3;
-        arrow(ctx, X(0), Y(0), W - mr + 10, Y(0));
-        arrow(ctx, X(0), Y(0), X(0), mt + 20);
+        ctx.strokeStyle = "#000"; ctx.fillStyle = "#000"; ctx.lineWidth = 2;
+        ctx.strokeRect(L0, T0, R1 - L0, B0 - T0);
+        ctx.font = "30px Arial";
+        ctx.textAlign = "center"; ctx.textBaseline = "top";
+        xticks.forEach(function (x) {
+          ctx.beginPath(); ctx.moveTo(X(x), B0); ctx.lineTo(X(x), B0 - 12); ctx.stroke();
+          ctx.fillText(x.toFixed(1), X(x), B0 + 10);
+        });
+        ctx.textAlign = "right"; ctx.textBaseline = "middle";
+        yticks.forEach(function (y) {
+          ctx.beginPath(); ctx.moveTo(L0, Y(y)); ctx.lineTo(L0 + 12, Y(y)); ctx.stroke();
+          ctx.fillText(y.toFixed(2), L0 - 10, Y(y));
+        });
         modes.forEach(function (m) {
           tags[m].style.opacity = shown[m] ? 1 : 0;
-          if (!shown[m]) return;
-          var w = QNM[m];
-          ctx.beginPath(); ctx.arc(X(w[0]), Y(-w[1]), 12, 0, 2 * Math.PI); ctx.fill();
+          if (shown[m]) cross(ctx, X(QNM[m][0]), Y(-QNM[m][1]));
         });
       }
     };
   }
-  function arrow(ctx, x0, y0, x1, y1) {
-    var a = Math.atan2(y1 - y0, x1 - x0), s = 18, c = Math.cos(a), n = Math.sin(a);
-    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - 0.8 * s * c, y1 - 0.8 * s * n); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - s * c + 0.45 * s * n, y1 - s * n - 0.45 * s * c);
-    ctx.lineTo(x1 - s * c - 0.45 * s * n, y1 - s * n + 0.45 * s * c);
-    ctx.closePath(); ctx.fill();
+  function cross(p, x, y) {
+    var a = 14;
+    [["#fff", 9], ["#000", 4]].forEach(function (st) {
+      p.strokeStyle = st[0]; p.lineWidth = st[1];
+      p.beginPath();
+      p.moveTo(x - a, y - a); p.lineTo(x + a, y + a);
+      p.moveTo(x - a, y + a); p.lineTo(x + a, y - a);
+      p.stroke();
+    });
   }
+  function range(a, b, d) { var r = []; for (var x = a; x <= b + 1e-9; x += d) r.push(+x.toFixed(6)); return r; }
 
   // One requestAnimationFrame loop per slide, running while the slide is shown.
   function Runner(frame) {
@@ -338,31 +397,24 @@
   // 10 complex plane with 220; 11 221 added.
   (function () {
     var view, rc, lm, eht, planeBox, plane = null, run, leftCanvas;
-    var left = still(T_START), right = still(D.tCommon);
+    var left = still(T_START_Q), right = still(D.tCommon);
     var par = { blob: P(0), zoom: P(1), hor: P(0), lr: P(0) };
 
     function drawRight(now) {
-      var k = fit(rc), ctx = rc.getContext("2d");
-      ctx.setTransform(k, 0, 0, k, 0, 0);
-      ctx.clearRect(0, 0, 900, 900);
-      var b = val(par.blob, now);
-      if (b <= 0) return;
       var q = quadNR(tAt(right, now)), R = D.Rfinal * (900 / (2 * L)) * val(par.zoom, now);
-      ctx.globalAlpha = b;
-      hole(ctx, 450, 450, R, 2, q.e, q.ang, val(par.hor, now), val(par.lr, now));
-      ctx.globalAlpha = 1;
+      hole(rc, 450, 450, R, 2, q.e, q.ang, val(par.blob, now), val(par.hor, now), val(par.lr, now));
     }
 
     Deck.widget("ringdown-quad", {
       steps: 11,
       enter: function (slide) {
         leftCanvas = slide.querySelector("#ringdown-quad-left");
-        view = MergerView(leftCanvas, L, 0, 0);
+        view = SoftMergerView(leftCanvas, L, 0, 0);
         rc = slide.querySelector("#ringdown-quad-right");
         lm = slide.querySelector("#ringdown-quad-lm");
         eht = slide.querySelector("#ringdown-eht");
         planeBox = slide.querySelector("#ringdown-quad-plane");
-        if (!plane) plane = Plane(planeBox, 0.7, 0.3, ["220", "221"]);
+        if (!plane) plane = Plane(planeBox, [0.38, 0.8], [0.04, 0.36], range(0.4, 0.8, 0.1), range(0.05, 0.35, 0.05), ["220", "221"]);
         run = Runner(function (now) {
           view.draw(tAt(left, now));
           drawRight(now);
@@ -374,8 +426,8 @@
       step: function (slide, k, dir) {
         var now = performance.now(), fwd = dir > 0, inst = !fwd;
         // left: inspiral, then frozen at merger; replaced by the EHT image and the plane
-        if (k === 0) left = still(T_START);
-        else if (k === 1 && fwd) left = clip(T_START, D.tCommon, SPEED_INSPIRAL, false, now);
+        if (k === 0) left = still(T_START_Q);
+        else if (k === 1 && fwd) left = clip(T_START_Q, D.tCommon, SPEED_INSPIRAL, false, now);
         else left = still(D.tCommon);
         fade(leftCanvas, k < 9, inst);
         // right: the quadrupole blob
@@ -400,28 +452,26 @@
   // Stage 2: the complex plane with 220, 221, 330, 331, 440, 441.
   (function () {
     var view, modes, terms, planeBox, plane = null, run, loop;
-    var MODE_EPS = { 2: EPS, 3: 0.22, 4: 0.16 };
+    var MODE_EPS = { 2: EPS, 3: 0.3, 4: 0.25 };
 
     Deck.widget("ringdown-sum", {
       steps: 2,
       enter: function (slide) {
         var s = sample(D.tCommon + 50);
-        view = MergerView(slide.querySelector("#ringdown-sum-full"), 3.4, s.acx, s.acy);
+        view = SoftMergerView(slide.querySelector("#ringdown-sum-full"), 5.5, s.acx, s.acy);
         modes = [2, 3, 4].map(function (m) { return [m, slide.querySelector("#ringdown-sum-" + m + m)]; });
         terms = slide.querySelector("#ringdown-sum-terms");
         planeBox = slide.querySelector("#ringdown-sum-plane");
-        if (!plane) plane = Plane(planeBox, 1.25, 0.3, ["220", "221", "330", "331", "440", "441"]);
+        if (!plane) plane = Plane(planeBox, [0.38, 1.22], [0.04, 0.36], range(0.4, 1.2, 0.2), range(0.05, 0.35, 0.05),
+                                  ["220", "221", "330", "331", "440", "441"]);
         loop = clip(D.tCommon, T_RD_END, SPEED_RINGDOWN, true, performance.now());
         var ang0 = quadNR(D.tCommon).ang;
         run = Runner(function (now) {
           var t = tAt(loop, now);
           view.draw(t);
           modes.forEach(function (mc) {
-            var m = mc[0], c = mc[1], k = fit(c), ctx = c.getContext("2d");
-            var q = quadQNM(m, t, ang0);
-            ctx.setTransform(k, 0, 0, k, 0, 0);
-            ctx.clearRect(0, 0, 300, 300);
-            hole(ctx, 150, 150, 95, m, MODE_EPS[m] * q.e, q.ang, 1, 1);
+            var m = mc[0], q = quadQNM(m, t, ang0);
+            hole(mc[1], 190, 190, 62, m, MODE_EPS[m] * q.e, q.ang, 1, 1, 1);
           });
           plane.draw();
         });
