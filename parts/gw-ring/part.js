@@ -280,6 +280,13 @@
     ctx.translate(1920, 0); ctx.scale(-1, 1);
     ctx.drawImage(photo, 0, 380, 2400, 1220, 0, 52, 1920, 976);
     ctx.restore();
+    // Credit line required by the LIGO image use policy.
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#555";
+    ctx.font = "22px Arial"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillText("Photo: Courtesy Caltech/MIT/LIGO Laboratory (mirrored)", 1905, 1054);
+    ctx.restore();
     if (kmAlpha > 0) {
       photoLabel(ctx, KM_UP[0], Math.atan2(ARM_UP[1][1] - ARM_UP[0][1], ARM_UP[1][0] - ARM_UP[0][0]),
                  kmAlpha * alpha);

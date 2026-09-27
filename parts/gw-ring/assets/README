@@ -2,7 +2,17 @@ Images used by the gw-ring part. Downloaded 2026-09-27.
 
 ligo_hanford_aerial.jpg
   Aerial view of the LIGO Hanford Observatory, 2400x1600, unmodified file.
-  Source: https://commons.wikimedia.org/wiki/File:LIGO_Hanford_aerial_05.jpg
-  Author: LIGO Laboratory. Licence on Wikimedia Commons: public domain.
-  The slide shows it mirrored left-right (in part.js), so that the L is upright:
-  corner station at the lower left, one arm to the right, one arm up.
+  Downloaded from: https://commons.wikimedia.org/wiki/File:LIGO_Hanford_aerial_05.jpg
+  Original source (per Commons): LIGO Laboratory gallery,
+    https://web.archive.org/web/20170614214509/http://www.ligo.org/multimedia/gallery/lho-images/Aerial5.jpg
+  Author: LIGO Laboratory.
+  Licence: Commons tags it {{PD-USGov}}. That tag is doubtful (LIGO Laboratory is run by
+  Caltech and MIT, not by federal employees), so the slide relies on the LIGO image use
+  policy instead (https://www.ligo.caltech.edu/page/image-use-policy, read 2026-09-27 via
+  the Wayback Machine copy of 2024-01-01): LIGO images "may be used for any purpose without
+  prior permission", with the credit line "Courtesy Caltech/MIT/LIGO Laboratory".
+  Not checked: whether this exact photo also appears on a caltech.edu or mit.edu page, which
+  is the scope that policy names.
+  The slide shows the photo mirrored left-right (in part.js), so that the L is upright:
+  corner station at the lower left, one arm to the right, one arm up. The slide carries
+  the credit line "Photo: Courtesy Caltech/MIT/LIGO Laboratory (mirrored)".
