@@ -1,16 +1,18 @@
 // Black-hole merger from the prod_n24 NR run, drawn as a metaball field (schematic).
-// Stage 0: the binary at t = 0. Stage 1: inspiral up to the common horizon, then pause.
+// Stage 0: the binary two orbits before merger. Stage 1: inspiral up to the common horizon,
+// then pause.
 // Stage 2: ringdown, played at half the stage-1 speed.
 (function () {
   "use strict";
 
   var D = RINGDOWN_DATA;
+  var T_START = 677.5;      // M; two orbits of the punctures before the common horizon
   var L = 7.0;              // half-width of the view, in M
   var SPEED_INSPIRAL = 60;  // M per second
   var SPEED_RINGDOWN = 30;  // M per second
   var CAP = 3.0;            // cap of each metaball term; removes the centre singularity
 
-  var canvas = null, ctx = null, raf = null, curT = 0;
+  var canvas = null, ctx = null, raf = null, curT = T_START;
 
   // Linear interpolation of every column at time t.
   function sample(t) {
@@ -147,8 +149,8 @@
     },
     step: function (slide, k, dir) {
       stop();
-      if (k === 0) draw(0);
-      else if (k === 1) { if (dir > 0) play(0, D.tCommon, SPEED_INSPIRAL); else draw(D.tCommon); }
+      if (k === 0) draw(T_START);
+      else if (k === 1) { if (dir > 0) play(T_START, D.tCommon, SPEED_INSPIRAL); else draw(D.tCommon); }
       else { if (dir > 0) play(D.tCommon, D.tEnd, SPEED_RINGDOWN); else draw(D.tEnd); }
     }
   });
