@@ -6,3 +6,40 @@
 }
 .ringdown-left { left: 30px; }
 .ringdown-right { left: 990px; }
+.ringdown-quad-right { top: 30px; }
+.ringdown-fade { opacity: 0; transition: opacity 0.5s; }
+.ringdown-lm {
+  position: absolute;
+  font-size: 48px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.ringdown-quad-lm { left: 1440px; top: 950px; }
+.ringdown-eht {
+  position: absolute;
+  left: 130px;
+  top: 110px;
+  width: 700px;
+}
+.ringdown-eht-img { display: block; width: 700px; height: 700px; }
+.ringdown-cite { margin-top: 12px; text-align: center; }
+.ringdown-plane-box { position: absolute; }
+.ringdown-quad-plane { left: 30px; top: 190px; width: 900px; height: 700px; }
+.ringdown-sum-plane { left: 260px; top: 520px; width: 1400px; height: 520px; }
+.ringdown-plane-box canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.ringdown-plane-label {
+  position: absolute;
+  font-size: 40px;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+.ringdown-sum-full { position: absolute; left: 60px; top: 60px; width: 400px; height: 400px; }
+.ringdown-mode { position: absolute; top: 110px; width: 300px; height: 300px; }
+.ringdown-op {
+  position: absolute;
+  top: 260px;
+  font-size: 64px;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+.ringdown-sum-lm { top: 415px; font-size: 40px; }
