@@ -1,0 +1,124 @@
+.rd-real-bigtitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 460px;
+  margin: 0;
+  text-align: center;
+  font-size: 96px;
+}
+
+#rd-real-hottake > h1.rd-real-red {
+  color: #d62728;
+}
+
+.rd-real-fig {
+  position: absolute;
+  margin: 0;
+  text-align: center;
+}
+
+.rd-real-fig img {
+  display: block;
+  width: 100%;
+}
+
+.rd-real-bullets {
+  position: absolute;
+  left: 260px;
+  top: 260px;
+  width: 1400px;
+  margin: 0;
+  font-size: 48px;
+  line-height: 1.3;
+}
+
+.rd-real-bullets li {
+  margin-bottom: 44px;
+}
+
+.rd-real-canvas {
+  position: absolute;
+}
+
+.rd-real-label {
+  position: absolute;
+  font-size: 40px;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+.rd-real-ylabel {
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.rd-real-kerr {
+  position: absolute;
+  font-size: 28px;
+  color: #444;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.rd-real-controls {
+  position: absolute;
+  left: 470px;
+  top: 985px;
+  width: 1100px;
+  height: 60px;
+}
+
+.rd-real-play {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+}
+
+.rd-real-bar {
+  position: absolute;
+  left: 80px;
+  top: 0;
+  width: 760px;
+  height: 60px;
+  cursor: pointer;
+}
+
+.rd-real-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 26px;
+  height: 8px;
+  background: #d9d9d9;
+  border-radius: 4px;
+}
+
+.rd-real-fill {
+  position: absolute;
+  left: 0;
+  top: 26px;
+  height: 8px;
+  background: #555;
+  border-radius: 4px;
+}
+
+.rd-real-knob {
+  position: absolute;
+  top: 16px;
+  width: 28px;
+  height: 28px;
+  margin-left: -14px;
+  background: #222;
+  border-radius: 50%;
+}
+
+.rd-real-t0 {
+  position: absolute;
+  left: 880px;
+  top: 4px;
+  font-size: 40px;
+  white-space: nowrap;
+}
