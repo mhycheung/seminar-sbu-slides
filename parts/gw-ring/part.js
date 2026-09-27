@@ -239,12 +239,18 @@
   photo.src = "parts/gw-ring/assets/ligo_hanford_aerial.jpg";
   var ARM_UP = [[345, 775], [1085, 268]];        // arm towards the upper right, full length
   var ARM_RIGHT = [[400, 832], [1920, 888]];     // arm to the right, leaves the photo
-  // Two poses of the schematic interferometer: o = beam splitter, ax/ay = directions of the
-  // x and y arms (radians, screen coordinates, y down), lx/ly = arm lengths in px.
-  // "photo": on the photo's arms (o = where the two arm lines meet); "flat": upright L.
-  var POSE_PHOTO = { o: [268, 827], ax: Math.atan2(56, 1520), ay: Math.atan2(-559, 817),
-                     lx: 1400, ly: 990 };
-  var POSE_FLAT = { o: [330, 640], ax: 0, ay: -Math.PI / 2, lx: 440, ly: 440 };
+  // Camera on the detector. The detector is a rigid L on the ground: arms along ground x
+  // and y, length 1. A view maps ground (u, v) to screen o + M (u, v), with M written as
+  // R(th) diag(s1, s2) R(ph) F (F flips v; s2/s1 = cos of the camera tilt). Moving from the
+  // photo's view to the top view interpolates th, s1, s2, ph and o: only the camera moves.
+  // "photo": arms on the photo's arm tubes, beam splitter where the two tube lines meet;
+  // "flat": top view, upright L.
+  var VIEW_PHOTO = { o: [268, 827], x: [1400 * Math.cos(Math.atan2(56, 1520)),
+                     1400 * Math.sin(Math.atan2(56, 1520))], y: [817, -559] };
+  var VIEW_FLAT = { o: [330, 640], x: [440, 0], y: [0, -440] };
+  var KM_UP = [[684, 476], [200, 420]];     // label of the y arm: photo view, top view
+  var KM_RIGHT = [[1158, 915], [550, 700]]; // label of the x arm: photo view, top view
+  var KM_SWING = 0.15;      // shown change of an arm length at h = EPS, km (exaggerated)
   var RC = [1350, 430], RR = 250;                // ring
   // Trace of h_+(t): axes origin (TX0, TY), newest value at TX1.
   var TX0 = 180, TX1 = 1740, TY = 900, TA = 95, TWIN = 6000;
@@ -255,29 +261,15 @@
 
   function amp(s) { return s <= 0 ? 0 : EPS * ease(Math.min(1, s / AMPRAMP)); }
 
-  // Double-headed arrow from a to b, shifted by `off` px to the left of a->b, with a label.
-  function kmArrow(ctx, a, b, off, label, alpha) {
-    var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy);
-    var ux = dx / L, uy = dy / L, nx = uy, ny = -ux;
-    var p = [a[0] + off * nx, a[1] + off * ny], r = [b[0] + off * nx, b[1] + off * ny];
+  // "4 km" beside an arm on the photo: white, along the arm direction a (radians).
+  function photoLabel(ctx, c, a, alpha) {
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = "#fff"; ctx.fillStyle = "#fff"; ctx.lineWidth = 4;
-    ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 6;
-    ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(r[0], r[1]); ctx.stroke();
-    [[p, 1], [r, -1]].forEach(function (e) {
-      var t = e[0], sg = e[1];
-      ctx.beginPath();
-      ctx.moveTo(t[0], t[1]);
-      ctx.lineTo(t[0] + sg * 24 * ux + 10 * nx, t[1] + sg * 24 * uy + 10 * ny);
-      ctx.lineTo(t[0] + sg * 24 * ux - 10 * nx, t[1] + sg * 24 * uy - 10 * ny);
-      ctx.closePath(); ctx.fill();
-    });
-    var lo = off < 0 ? -40 : 40;   // label on the outer side of the arrow
-    ctx.translate((p[0] + r[0]) / 2 + lo * nx, (p[1] + r[1]) / 2 + lo * ny);
-    ctx.rotate(Math.atan2(uy, ux));
+    ctx.fillStyle = "#fff";
+    ctx.shadowColor = "rgba(0,0,0,0.7)"; ctx.shadowBlur = 8;
+    ctx.translate(c[0], c[1]); ctx.rotate(a);
     ctx.font = "bold 44px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText(label, 0, 0);
+    ctx.fillText("4 km", 0, 0);
     ctx.restore();
   }
 
@@ -289,9 +281,37 @@
     ctx.drawImage(photo, 0, 380, 2400, 1220, 0, 52, 1920, 976);
     ctx.restore();
     if (kmAlpha > 0) {
-      kmArrow(ctx, ARM_UP[0], ARM_UP[1], 50, "4 km", kmAlpha * alpha);
-      kmArrow(ctx, ARM_RIGHT[0], [1890, ARM_RIGHT[1][1] - 1], -50, "4 km", kmAlpha * alpha);
+      photoLabel(ctx, KM_UP[0], Math.atan2(ARM_UP[1][1] - ARM_UP[0][1], ARM_UP[1][0] - ARM_UP[0][0]),
+                 kmAlpha * alpha);
+      photoLabel(ctx, KM_RIGHT[0], Math.atan2(ARM_RIGHT[1][1] - ARM_RIGHT[0][1],
+                 ARM_RIGHT[1][0] - ARM_RIGHT[0][0]), kmAlpha * alpha);
     }
+  }
+
+  // M' = M F = R(th) diag(s1, s2) R(ph), closed-form 2x2 decomposition (det M' > 0).
+  function decompose(v) {
+    var p = v.x[0], qq = -v.y[0], r = v.x[1], t = -v.y[1];
+    var E = (p + t) / 2, Fh = (p - t) / 2, G = (r + qq) / 2, H = (r - qq) / 2;
+    var Q = Math.hypot(E, H), R = Math.hypot(Fh, G);
+    var a1 = R > 1e-9 ? Math.atan2(G, Fh) : 0, a2 = Math.atan2(H, E);
+    return { o: v.o, s1: Q + R, s2: Q - R, th: (a2 + a1) / 2, ph: (a2 - a1) / 2 };
+  }
+  var CAM_A = decompose(VIEW_PHOTO), CAM_B = decompose(VIEW_FLAT);
+  // The top view has s1 = s2, so only th + ph is fixed there; split the rotation evenly.
+  (function () {
+    var d = CAM_B.th + CAM_B.ph - (CAM_A.th + CAM_A.ph);
+    d = Math.atan2(Math.sin(d), Math.cos(d));
+    CAM_B.th = CAM_A.th + d / 2; CAM_B.ph = CAM_A.ph + d / 2;
+  })();
+  function camera(m) {
+    function L(k) { return CAM_A[k] + (CAM_B[k] - CAM_A[k]) * m; }
+    var th = L("th"), ph = L("ph"), s1 = L("s1"), s2 = L("s2");
+    var ct = Math.cos(th), st = Math.sin(th), cp = Math.cos(ph), sp = Math.sin(ph);
+    // R(th) diag(s1, s2) R(ph), then flip the second column.
+    var m11 = ct * s1 * cp - st * s2 * sp, m12 = -ct * s1 * sp - st * s2 * cp;
+    var m21 = st * s1 * cp + ct * s2 * sp, m22 = -st * s1 * sp + ct * s2 * cp;
+    return { o: [CAM_A.o[0] + (CAM_B.o[0] - CAM_A.o[0]) * m, CAM_A.o[1] + (CAM_B.o[1] - CAM_A.o[1]) * m],
+             x: [m11, m21], y: [-m12, -m22] };
   }
 
   // Filled rectangle centred at c, size w along direction a and t across it.
@@ -302,24 +322,22 @@
     ctx.restore();
   }
 
-  // Interferometer in the pose interpolated by m (0 photo, 1 upright). In the arm frame,
-  // every point moves by dx_i = (1/2) h_ij x_j about the beam splitter, as for the ring.
+  // Interferometer seen by the camera at m (0 photo view, 1 top view). In ground
+  // coordinates every point moves by dx_i = (1/2) h_ij x_j about the beam splitter, the
+  // same map as for the ring. Laser and photodetector keep fixed screen offsets.
   function drawSchematic(ctx, alpha, m, hp, hx) {
     if (alpha <= 0) return;
-    var A = POSE_PHOTO, B = POSE_FLAT;
-    var o = [A.o[0] + (B.o[0] - A.o[0]) * m, A.o[1] + (B.o[1] - A.o[1]) * m];
-    var ax = A.ax + (B.ax - A.ax) * m, ay = A.ay + (B.ay - A.ay) * m;
-    var lx = A.lx + (B.lx - A.lx) * m, ly = A.ly + (B.ly - A.ly) * m;
-    var ux = [Math.cos(ax), Math.sin(ax)], uy = [Math.cos(ay), Math.sin(ay)];
-    function at(a, b) {           // a along the x arm, b along the y arm, px
-      return [o[0] + a * ux[0] + b * uy[0], o[1] + a * ux[1] + b * uy[1]];
-    }
-    var ex = at(lx * (1 + 0.5 * hp), 0.5 * hx * lx), ey = at(0.5 * hx * ly, ly * (1 - 0.5 * hp));
-    var laser = at(-130, 0), pd = at(0, -100);
+    var c = camera(m), o = c.o;
+    function at(u, v) { return [o[0] + u * c.x[0] + v * c.y[0], o[1] + u * c.x[1] + v * c.y[1]]; }
+    var lx = Math.hypot(c.x[0], c.x[1]), ly = Math.hypot(c.y[0], c.y[1]);
+    var ux = [c.x[0] / lx, c.x[1] / lx], uy = [c.y[0] / ly, c.y[1] / ly];
+    var ax = Math.atan2(ux[1], ux[0]), ay = Math.atan2(uy[1], uy[0]);
+    function off(u, d) { return [o[0] + d * u[0], o[1] + d * u[1]]; }
+    var ex = at(1 + 0.5 * hp, 0.5 * hx), ey = at(0.5 * hx, 1 - 0.5 * hp);
+    var laser = off(ux, -130), pd = off(uy, -100), pdIn = off(uy, -80), lsOut = off(ux, -65);
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.strokeStyle = "#c00"; ctx.lineWidth = 5;
-    var pdIn = at(0, -80), lsOut = at(-65, 0);
     ctx.beginPath();
     ctx.moveTo(lsOut[0], lsOut[1]); ctx.lineTo(o[0], o[1]);
     ctx.moveTo(o[0], o[1]); ctx.lineTo(ex[0], ex[1]);
@@ -335,6 +353,30 @@
     ctx.fill();
     ctx.fillStyle = "#666";                                         // beam splitter
     box(ctx, o, Math.atan2(ux[1] + uy[1], ux[0] + uy[0]), 90, 10);
+    ctx.restore();
+  }
+
+  // Arm-length labels of the schematic, at fixed places. Before the wave: "4 km"; during
+  // it, the (exaggerated) lengths with three decimals.
+  function drawKm(ctx, alpha, m, running, hp) {
+    if (alpha <= 0) return;
+    var dx = KM_SWING * hp / EPS;
+    var tx = running ? (4 + dx).toFixed(3) + " km" : "4 km";
+    var ty = running ? (4 - dx).toFixed(3) + " km" : "4 km";
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#000";
+    ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    // Each label starts at the angle of its photo label and turns level with the camera.
+    [[KM_RIGHT, tx, ARM_RIGHT], [KM_UP, ty, ARM_UP]].forEach(function (e) {
+      var A = e[0][0], B = e[0][1], arm = e[2];
+      var a0 = Math.atan2(arm[1][1] - arm[0][1], arm[1][0] - arm[0][0]);
+      ctx.save();
+      ctx.translate(A[0] + (B[0] - A[0]) * m, A[1] + (B[1] - A[1]) * m);
+      ctx.rotate(a0 * (1 - m));
+      ctx.fillText(e[1], 0, 0);
+      ctx.restore();
+    });
     ctx.restore();
   }
 
@@ -400,7 +442,9 @@
     var A = amp(s), ph = phase(s), hp = A * Math.cos(2 * ph), hx = A * Math.sin(2 * ph);
     drawPhoto(ctx2, 1 - f, val(q.km, now));
     drawSchematic(ctx2, f, m, hp, hx);
-    drawRing2(ctx2, m, hp, hx);
+    drawKm(ctx2, f * val(q.km, now), m, ligoStart !== null, hp);
+    // The ring fades in over the last 40% of the camera move, after the x arm has passed.
+    drawRing2(ctx2, Math.max(0, (m - 0.6) / 0.4), hp, hx);
     drawTrace(ctx2, val(q.trace, now), s);
   }
 
