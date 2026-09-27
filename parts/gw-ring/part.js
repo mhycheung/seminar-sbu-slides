@@ -114,26 +114,27 @@
     ctx.globalAlpha = 1;
   }
 
-  // Faint lines through the ring centre along the plane's X and Y directions.
-  function planeAxes(ctx, z, a, alpha) {
+  // Faint lines through the centre of the plane through o along e1 and e2.
+  function planeAxes(ctx, o, e1, e2, a, alpha) {
     if (alpha <= 0) return;
     ctx.strokeStyle = "rgba(0,0,0," + 0.2 * alpha + ")";
     ctx.lineWidth = 1.5;
-    [[a, 0], [0, a]].forEach(function (d) {
-      var p = proj(-d[0], -d[1], z), q = proj(d[0], d[1], z);
+    [e1, e2].forEach(function (e) {
+      var p = proj(o[0] - a * e[0], o[1] - a * e[1], o[2] - a * e[2]);
+      var q = proj(o[0] + a * e[0], o[1] + a * e[1], o[2] + a * e[2]);
       ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
     });
   }
 
-  // Small faint X, Y, Z triad in the lower left, turned with the camera.
-  var TRIAD = [160, 950], TL = 70;
+  // Small faint x, y, z triad in the lower left, turned with the camera.
+  var TRIAD = [170, 930], TL = 110;
   function triad(ctx, alpha) {
     if (alpha <= 0) return;
     var col = "rgba(0,0,0," + 0.4 * alpha + ")";
     ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
     ctx.font = "italic 30px KaTeX_Math, 'Times New Roman', serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    [["X", [1, 0, 0]], ["Y", [0, 1, 0]], ["Z", [0, 0, 1]]].forEach(function (ax) {
+    [["x", [1, 0, 0]], ["y", [0, 1, 0]], ["z", [0, 0, 1]]].forEach(function (ax) {
       var v = ax[1];
       var dx = v[0] * cam.R[0] + v[1] * cam.R[1] + v[2] * cam.R[2];
       var dy = -(v[0] * cam.U[0] + v[1] * cam.U[1] + v[2] * cam.U[2]);
@@ -164,12 +165,13 @@
 
     var D = D2 + (D3 - D2) * c;
     frame(ctx, [0, 0, 0], e1, e2, D + FB, val(par.frame, now));
+    planeAxes(ctx, [0, 0, 0], e1, e2, D + FB, val(par.frame, now));
     triad(ctx, val(par.frame, now));
     for (var j = 0; j < NW; j++) {
       var z = (j + 1) * DZ, ret = phase(s - (j + 1) * DELAY);
       var ac = val(circ[j], now), ap = val(plus[j], now);
       frame(ctx, [0, 0, z], [1, 0, 0], [0, 1, 0], FW, Math.max(ac, ap));
-      planeAxes(ctx, z, FW, Math.max(ac, ap));
+      planeAxes(ctx, [0, 0, z], [1, 0, 0], [0, 1, 0], FW, Math.max(ac, ap));
       ring(ctx, z, h, ret, true, ac, DOT * size);
       ring(ctx, z, h, ret, false, ap, DOT * size);
     }
