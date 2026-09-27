@@ -233,7 +233,7 @@
         var start = null, ms = (b - a) / SWEEP_RATE;
         (function tick(now) {
           if (start === null) start = now;
-          var u = Math.min(1, (now - start) / ms);
+          var u = Math.max(0, Math.min(1, (now - start) / ms));  // rAF time may precede start
           show(slide, stage, a + (b - a) * u, u < 1);
           raf = u < 1 ? requestAnimationFrame(tick) : null;
         })(performance.now());
@@ -270,4 +270,89 @@
     plane: { x: [0.38, 0.64], y: [0.04, 0.36], xt: range(0.4, 0.6, 0.05), yt: range(0.05, 0.35, 0.05) },
     markers: [{ w: D.w220, label: "220", from: 0 }, { w: D.w221, label: "221", from: 0 }]
   });
+  // ---- slides 4 and 5: many-mode fits, complex plane only ----
+  // Stage 0: fits at t0 = 0. Stage 1: sweep t0 = 0 -> 50 M_f by itself. Stage 2: the target
+  // frequency (retrograde (2,2,0), or quadratic (2,2,0)x(2,2,0)) is marked and labelled.
+  // The track that ends near the target (M.hi) is drawn in C3 and at full opacity; the other
+  // tracks in the other matplotlib cycle colours, fainter.
+  var CYCLE = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f"];
+  var HI_COLOR = CYCLE[3];
+  var FAINT = 0.45;                      // opacity of the unmarked tracks relative to the marked one
+
+  function many(opt) {
+    var M = window.QNMFIT_MANY[opt.key], K = window.QNMFIT_MANY.k;
+    var n = M.nFree, raf = null, state = null, onResize = null;
+    var others = CYCLE.filter(function (c) { return c !== HI_COLOR; });
+    var colors = [], o = 0;
+    for (var j = 0; j < n; j++) colors.push(j === M.hi ? HI_COLOR : others[o++]);
+
+    function draw(slide, stage, cur, moving) {
+      var cv = slide.querySelector(".qnm-fit-plane");
+      var c = setup(cv);
+      var f = frame(c, opt.plane.x, opt.plane.y, opt.plane.xt, opt.plane.yt, fixed(1), fixed(1));
+      var p = c.ctx;
+      clip(c, f);
+      // faint tracks first, the marked track on top
+      var order = [];
+      for (var j = 0; j < n; j++) if (j !== M.hi) order.push(j);
+      order.push(M.hi);
+      order.forEach(function (j) {
+        var hi = j === M.hi;
+        p.fillStyle = colors[j];
+        p.globalAlpha = (hi ? 1 : FAINT) * 0.5;
+        for (var i = 0; i < cur; i++) {
+          p.beginPath(); p.arc(f.X(M.wr[i][j]), f.Y(-M.wi[i][j]), hi ? 6 : 4, 0, 2 * Math.PI); p.fill();
+        }
+        p.globalAlpha = hi ? 1 : FAINT + 0.15;
+        p.beginPath(); p.arc(f.X(M.wr[cur][j]), f.Y(-M.wi[cur][j]), hi ? 15 : 11, 0, 2 * Math.PI); p.fill();
+      });
+      p.globalAlpha = 1;
+      var el = slide.querySelector(".qnm-fit-target");
+      el.style.visibility = stage >= 2 ? "visible" : "hidden";
+      if (stage >= 2) {
+        var qx = f.X(M.target[0]), qy = f.Y(-M.target[1]);
+        cross(p, qx, qy);
+        el.style.left = (parseFloat(cv.style.left) + qx + opt.labelDx) + "px";
+        el.style.top = (parseFloat(cv.style.top) + qy + opt.labelDy) + "px";
+      }
+      p.restore();
+      var k = K[cur];
+      katex.render("t_0 = " + (moving ? Math.round(k) : k) + "\\, M_f", slide.querySelector(".qnm-fit-t0"));
+    }
+
+    function show(slide, stage, k, moving) {
+      state = { stage: stage, k: k };
+      draw(slide, stage, kIndex(k), moving);
+    }
+
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
+
+    Deck.widget(opt.id, {
+      steps: 2,
+      enter: function (slide) {
+        onResize = function () { if (state) show(slide, state.stage, state.k); };
+        window.addEventListener("resize", onResize);
+      },
+      leave: function () { stop(); window.removeEventListener("resize", onResize); },
+      step: function (slide, stage, dir) {
+        stop();
+        if (stage === 0) { show(slide, 0, 0); return; }
+        if (stage === 2 || dir < 0) { show(slide, stage, 50); return; }
+        var start = null, ms = 50 / SWEEP_RATE;
+        (function tick(now) {
+          if (start === null) start = now;
+          var u = Math.max(0, Math.min(1, (now - start) / ms));  // rAF time may precede start
+          show(slide, 1, 50 * u, u < 1);
+          raf = u < 1 ? requestAnimationFrame(tick) : null;
+        })(performance.now());
+      }
+    });
+  }
+
+  // Plane ranges hold every fitted frequency except the unused mode at omega ~ 0 (or growing,
+  // -M_f omega_i < 0, at the earliest t0), which falls below the lower edge.
+  many({ id: "qnm-fit-many22", key: "lm22", labelDx: 60, labelDy: 5,
+    plane: { x: [-0.45, 0.95], y: [0.02, 0.46], xt: range(-0.4, 0.8, 0.2), yt: range(0.1, 0.4, 0.1) } });
+  many({ id: "qnm-fit-many44", key: "lm44", labelDx: 20, labelDy: -85,
+    plane: { x: [0.45, 1.6], y: [0.02, 0.46], xt: range(0.6, 1.6, 0.2), yt: range(0.1, 0.4, 0.1) } });
 })();

@@ -27,3 +27,14 @@
   font-size: 36px;
   white-space: nowrap;
 }
+
+.qnm-fit-t0-plane {
+  left: 1500px;
+  top: 120px;
+}
+
+.qnm-fit-target {
+  font-size: 44px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0 6px;
+}
