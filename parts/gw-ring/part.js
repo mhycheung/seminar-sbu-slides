@@ -249,7 +249,7 @@
                      1400 * Math.sin(Math.atan2(56, 1520))], y: [817, -559] };
   var VIEW_FLAT = { o: [330, 640], x: [440, 0], y: [0, -440] };
   var KM_UP = [[684, 476], [200, 420]];     // label of the y arm: photo view, top view
-  var KM_RIGHT = [[1158, 915], [550, 700]]; // label of the x arm: photo view, top view
+  var KM_RIGHT = [[1158, 915], [550, 722]]; // label of the x arm: photo view, top view
   var KM_SWING = 0.15;      // shown change of an arm length at h = EPS, km (exaggerated)
   var RC = [1350, 430], RR = 250;                // ring
   // Trace of h_+(t): axes origin (TX0, TY), newest value at TX1.
@@ -365,7 +365,7 @@
     var ty = running ? (4 - dx).toFixed(3) + " km" : "4 km";
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = "#c00";
     ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     // Each label starts at the angle of its photo label and turns level with the camera.
     [[KM_RIGHT, tx, ARM_RIGHT], [KM_UP, ty, ARM_UP]].forEach(function (e) {
