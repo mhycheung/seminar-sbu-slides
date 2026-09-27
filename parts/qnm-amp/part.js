@@ -1,5 +1,5 @@
 // QNM-amplitude part, slide 1: 3D scatter of A_220 for the aligned-spin prec_amp fits over
-// (q, chi_eff, chi_-), rotating on its own and by mouse drag. Slides 2-4 are images.
+// (chi_eff, chi_-, q) with q vertical, rotating on its own and by mouse drag. Slides 2-4 are images.
 // Data: QNMAMP_DATA from assets/qnm-amp-data.js (tasks/t06-qnm-amp/make_qnm_amp_plots.py).
 (function () {
   "use strict";
@@ -32,9 +32,9 @@
     return D.lut[i];
   }
 
-  // Cube coordinates: x = q, y = chi_-, z = chi_eff (vertical).
+  // Cube coordinates: x = chi_eff, y = chi_-, z = q (vertical).
   var pts = D.q.map(function (q, i) {
-    return { x: norm(q, Q_RANGE), y: norm(D.chim[i], CHI_RANGE), z: norm(D.chip[i], CHI_RANGE),
+    return { x: norm(D.chip[i], CHI_RANGE), y: norm(D.chim[i], CHI_RANGE), z: norm(q, Q_RANGE),
              c: color(D.A[i]), a: D.A[i] };
   });
 
@@ -88,9 +88,9 @@
     });
     // Ticks and axis labels on one visible edge per axis.
     var axes = [
-      { k: 0, r: Q_RANGE, t: Q_TICKS, f: function (v) { return String(v); }, lab: ".qnm-amp-ax-q" },
+      { k: 0, r: CHI_RANGE, t: CHI_TICKS, f: function (v) { return String(v); }, lab: ".qnm-amp-ax-chip" },
       { k: 1, r: CHI_RANGE, t: CHI_TICKS, f: function (v) { return String(v); }, lab: ".qnm-amp-ax-chim" },
-      { k: 2, r: CHI_RANGE, t: CHI_TICKS, f: function (v) { return String(v); }, lab: ".qnm-amp-ax-chip" }
+      { k: 2, r: Q_RANGE, t: Q_TICKS, f: function (v) { return String(v); }, lab: ".qnm-amp-ax-q" }
     ];
     ctx.fillStyle = "#000";
     ctx.font = "28px Arial";
