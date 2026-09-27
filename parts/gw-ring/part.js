@@ -10,6 +10,10 @@
 // Stage 7: five more rings, appearing one after the other.
 // Stage 8: the orbital plane tilts to contain the propagation axis (edge-on binary);
 //          new rings appear one after the other, now plus polarised.
+// Second slide (gw-ring-ligo), stages 0-3: aerial photo of LIGO Hanford; 4 km marks on
+// the arms; fade to a schematic interferometer (left) and a ring of test masses (right);
+// the wave passes: ring and detector deform together, and the detector response h_+(t)
+// is traced at the bottom.
 (function () {
   "use strict";
 
@@ -55,8 +59,9 @@
   // Rate w(s) = wf - (wf - wi)(1 - s/RAMP)^2 for s < RAMP, wf after; phase = its integral.
   var WF = 2 * Math.PI / PERIOD, WI = SLOW * WF;
   var orbitStart = null;    // performance.now() at the start of the orbit; null: no orbit
+  // phase(s) is shared by both slides; s <= 0 means the orbit has not started.
   function phase(s) {
-    if (orbitStart === null || s <= 0) return 0;
+    if (s <= 0) return 0;
     var u = Math.min(s, RAMP) / RAMP;
     return WF * s - (WF - WI) * (RAMP / 3) * (1 - Math.pow(1 - u, 3));
   }
@@ -222,6 +227,173 @@
         set(circ[j], on ? 1 : 0, now, inst, k === 7 ? Math.max(0, j - 2) * 400 : 0, on ? 600 : 400);
         set(plus[j], k >= 8 ? 1 : 0, now, inst, 2000 + j * 350, 500);
       }
+    }
+  });
+
+  // ================= second slide: the LIGO detector =================
+
+  // Photo: source crop (0, 380)-(2400, 1600) px drawn at 0.8 scale, mirrored left-right,
+  // into slide rows 52-1028. Arm positions below are measured on the photo, in slide px.
+  var photo = new Image();
+  photo.src = "parts/gw-ring/assets/ligo_hanford_aerial.jpg";
+  var CORNER = [346, 804];                       // corner station
+  var ARM_UP = [[346, 804], [1086, 265]];        // arm towards the upper right, full length
+  var ARM_RIGHT = [[422, 838], [1920, 890]];     // arm to the right, leaves the photo
+  // Schematic interferometer (math y up about the beam splitter) and ring.
+  var BS = [330, 700], LA = 440, LASER = [70, 200], PD = [330, 800];
+  var RC = [1350, 470], RR = 260;
+  // Trace of h_+(t): newest value at the right end.
+  var TX0 = 150, TX1 = 1770, TY = 960, TA = 70, TWIN = 6000;
+  var AMPRAMP = 1200;       // strain grows from 0 to EPS in this time, ms
+
+  var q = { km: P(0), morph: P(0), trace: P(0) };
+  var ligoStart = null;
+
+  function amp(s) { return s <= 0 ? 0 : EPS * ease(Math.min(1, s / AMPRAMP)); }
+
+  // Double-headed arrow from a to b, shifted by `off` px to the left of a->b, with a label.
+  function kmArrow(ctx, a, b, off, label, alpha) {
+    var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy);
+    var ux = dx / L, uy = dy / L, nx = uy, ny = -ux;
+    var p = [a[0] + off * nx, a[1] + off * ny], r = [b[0] + off * nx, b[1] + off * ny];
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = "#fff"; ctx.fillStyle = "#fff"; ctx.lineWidth = 4;
+    ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 6;
+    ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(r[0], r[1]); ctx.stroke();
+    [[p, 1], [r, -1]].forEach(function (e) {
+      var t = e[0], sg = e[1];
+      ctx.beginPath();
+      ctx.moveTo(t[0], t[1]);
+      ctx.lineTo(t[0] + sg * 24 * ux + 10 * nx, t[1] + sg * 24 * uy + 10 * ny);
+      ctx.lineTo(t[0] + sg * 24 * ux - 10 * nx, t[1] + sg * 24 * uy - 10 * ny);
+      ctx.closePath(); ctx.fill();
+    });
+    var lo = off < 0 ? -40 : 40;   // label on the outer side of the arrow
+    ctx.translate((p[0] + r[0]) / 2 + lo * nx, (p[1] + r[1]) / 2 + lo * ny);
+    ctx.rotate(Math.atan2(uy, ux));
+    ctx.font = "bold 44px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  }
+
+  function drawPhoto(ctx, m, kmAlpha) {
+    var a = 1 - m;
+    if (a <= 0 || !photo.complete || !photo.naturalWidth) return;
+    // While fading, the photo shrinks about its corner towards the beam splitter.
+    var sc = 1 - 0.4 * m;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.translate(CORNER[0] + (BS[0] - CORNER[0]) * m, CORNER[1] + (BS[1] - CORNER[1]) * m);
+    ctx.scale(sc, sc);
+    ctx.translate(-CORNER[0], -CORNER[1]);
+    ctx.save();
+    ctx.translate(1920, 0); ctx.scale(-1, 1);
+    ctx.drawImage(photo, 0, 380, 2400, 1220, 0, 52, 1920, 976);
+    ctx.restore();
+    if (kmAlpha > 0) {
+      kmArrow(ctx, ARM_UP[0], ARM_UP[1], 50, "4 km", kmAlpha);
+      kmArrow(ctx, ARM_RIGHT[0], [1890, ARM_RIGHT[1][1] - 1], -50, "4 km", kmAlpha);
+    }
+    ctx.restore();
+  }
+
+  // Interferometer: every point of the arms moves by dx_i = (1/2) h_ij x_j about the beam
+  // splitter, the same map as for the ring.
+  function drawSchematic(ctx, alpha, hp, hx) {
+    if (alpha <= 0) return;
+    function at(dx, dy) {
+      return [BS[0] + dx + 0.5 * (hp * dx + hx * dy), BS[1] - (dy + 0.5 * (hx * dx - hp * dy))];
+    }
+    var ex = at(LA, 0), ey = at(0, LA);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = "#c00"; ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(LASER[1], BS[1]); ctx.lineTo(BS[0], BS[1]);
+    ctx.moveTo(BS[0], BS[1]); ctx.lineTo(ex[0], ex[1]);
+    ctx.moveTo(BS[0], BS[1]); ctx.lineTo(ey[0], ey[1]);
+    ctx.moveTo(BS[0], BS[1]); ctx.lineTo(PD[0], PD[1] - 20);
+    ctx.stroke();
+    ctx.fillStyle = "#000";
+    ctx.fillRect(LASER[0], BS[1] - 32, LASER[1] - LASER[0], 64);            // laser
+    ctx.fillRect(ex[0], ex[1] - 45, 16, 90);                               // end mirrors
+    ctx.fillRect(ey[0] - 45, ey[1] - 16, 90, 16);
+    ctx.beginPath(); ctx.arc(PD[0], PD[1], 24, 0, Math.PI); ctx.fill();    // photodetector
+    ctx.strokeStyle = "#666"; ctx.lineWidth = 10;                          // beam splitter
+    ctx.beginPath(); ctx.moveTo(BS[0] - 32, BS[1] + 32); ctx.lineTo(BS[0] + 32, BS[1] - 32);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawRing2(ctx, alpha, hp, hx) {
+    if (alpha <= 0) return;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#000";
+    for (var k = 0; k < N; k++) {
+      var th = 2 * Math.PI * k / N, x = RR * Math.cos(th), y = RR * Math.sin(th);
+      ctx.beginPath();
+      ctx.arc(RC[0] + x + 0.5 * (hp * x + hx * y), RC[1] - (y + 0.5 * (hx * x - hp * y)),
+              DOT, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawTrace(ctx, alpha, s) {
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(TX0, TY); ctx.lineTo(TX1, TY); ctx.stroke();
+    ctx.strokeStyle = "#000"; ctx.lineWidth = 4;
+    ctx.beginPath();
+    for (var x = TX0; x <= TX1; x += 3) {
+      var t = s - (TX1 - x) / (TX1 - TX0) * TWIN;
+      var y = TY - TA / EPS * amp(t) * Math.cos(2 * phase(t));
+      if (x === TX0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.arc(TX1, TY - TA / EPS * amp(s) * Math.cos(2 * phase(s)), 8, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawLigo(ctx2, now) {
+    ctx2.setTransform(2, 0, 0, 2, 0, 0);
+    ctx2.clearRect(0, 0, 1920, 1080);
+    var m = val(q.morph, now), s = ligoStart === null ? 0 : now - ligoStart;
+    var A = amp(s), ph = phase(s), hp = A * Math.cos(2 * ph), hx = A * Math.sin(2 * ph);
+    drawPhoto(ctx2, m, val(q.km, now));
+    drawSchematic(ctx2, m, hp, hx);
+    drawRing2(ctx2, m, hp, hx);
+    drawTrace(ctx2, val(q.trace, now), s);
+  }
+
+  var raf2 = null, ctx2 = null;
+  function loop2(now) { drawLigo(ctx2, now); raf2 = requestAnimationFrame(loop2); }
+  function stop2() { if (raf2) cancelAnimationFrame(raf2); raf2 = null; }
+  photo.onload = function () { if (ctx2 && !raf2) drawLigo(ctx2, performance.now()); };
+
+  Deck.widget("gw-ring-ligo", {
+    steps: 3,
+    enter: function (slide) {
+      ctx2 = slide.querySelector("canvas").getContext("2d");
+      ligoStart = null;
+      stop2();
+      raf2 = requestAnimationFrame(loop2);
+    },
+    leave: function () { stop2(); ligoStart = null; },
+    step: function (slide, k, dir) {
+      var now = performance.now(), inst = dir < 0;
+      if (k < 3) ligoStart = null;
+      // The wave starts on the way forward into stage 3; going back, it is already running.
+      else if (ligoStart === null) ligoStart = inst ? now - 100 * PERIOD : now;
+      set(q.km, k >= 1 ? 1 : 0, now, inst, 0, 600);
+      set(q.morph, k >= 2 ? 1 : 0, now, inst, 0, 2200);
+      set(q.trace, k >= 3 ? 1 : 0, now, inst, 0, 500);
     }
   });
 })();
