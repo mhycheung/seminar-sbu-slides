@@ -2,6 +2,8 @@
 // Stage 0: the binary two orbits before merger. Stage 1: inspiral up to the common horizon,
 // then pause.
 // Stage 2: ringdown, played at half the stage-1 speed.
+// Right: a ring of test masses deformed by the NR strain h_22 at the same time, as seen
+// face-on (circular polarisation); same style as the gw-ring part.
 (function () {
   "use strict";
 
@@ -11,14 +13,18 @@
   var SPEED_INSPIRAL = 60;  // M per second
   var SPEED_RINGDOWN = 30;  // M per second
   var CAP = 3.0;            // cap of each metaball term; removes the centre singularity
+  var R0 = 300;             // ring radius, px of the 900 px ring canvas
+  var N = 24;               // number of test masses
+  var DOT = 11;             // test-mass radius, px
+  var H = 0.26;             // strain shown at the peak of |h_22|
 
-  var canvas = null, ctx = null, raf = null, curT = T_START;
+  var canvas = null, ctx = null, rcanvas = null, rctx = null, raf = null, curT = T_START;
 
   // Linear interpolation of every column at time t.
   function sample(t) {
     var u = Math.max(0, Math.min(D.tEnd, t)) / D.dt;
     var i = Math.min(Math.floor(u), D.x0.length - 2), f = u - i, s = {};
-    ["x0", "y0", "x1", "y1", "R1", "R2", "acx", "acy", "A", "ph"].forEach(function (k) {
+    ["x0", "y0", "x1", "y1", "R1", "R2", "acx", "acy", "A", "ph", "hA", "h2psi"].forEach(function (k) {
       s[k] = D[k][i] * (1 - f) + D[k][i + 1] * f;
     });
     return s;
@@ -83,8 +89,25 @@
 
   // Black where F >= 1, transparent elsewhere; the edge is anti-aliased from the field
   // gradient, so it stays sharp at any canvas resolution.
+  // Mass at angle th moves by dx_i = (1/2) h_ij x_j, h_+ = h cos 2psi, h_x = h sin 2psi.
+  function drawRing(t) {
+    var W = rcanvas.width, k = W / 900, s = sample(t);
+    var h = H * s.hA, hp = h * Math.cos(s.h2psi), hx = h * Math.sin(s.h2psi);
+    rctx.setTransform(1, 0, 0, 1, 0, 0);
+    rctx.clearRect(0, 0, W, W);
+    rctx.setTransform(k, 0, 0, k, 0, 0);
+    rctx.fillStyle = "#000";
+    for (var i = 0; i < N; i++) {
+      var th = 2 * Math.PI * i / N, x = R0 * Math.cos(th), y = R0 * Math.sin(th);
+      rctx.beginPath();
+      rctx.arc(450 + x + 0.5 * (hp * x + hx * y), 450 - (y + 0.5 * (hx * x - hp * y)), DOT, 0, 2 * Math.PI);
+      rctx.fill();
+    }
+  }
+
   function draw(t) {
     curT = t;
+    drawRing(t);
     var W = canvas.width, sc = W / (2 * L), m = model(t);
     ctx.clearRect(0, 0, W, W);
     boxes(m, sc, W).forEach(function (b) {
@@ -119,7 +142,7 @@
   // Backing store matches the on-screen size in device pixels, so nothing is resampled.
   function resize() {
     var n = Math.max(200, Math.round(canvas.getBoundingClientRect().width * (window.devicePixelRatio || 1)));
-    if (canvas.width !== n) { canvas.width = n; canvas.height = n; }
+    [canvas, rcanvas].forEach(function (c) { if (c.width !== n) { c.width = n; c.height = n; } });
     draw(curT);
   }
 
@@ -138,8 +161,10 @@
   Deck.widget("ringdown-merger", {
     steps: 2,
     enter: function (slide) {
-      canvas = slide.querySelector("canvas");
+      canvas = slide.querySelector("#ringdown-canvas");
       ctx = canvas.getContext("2d");
+      rcanvas = slide.querySelector("#ringdown-ring");
+      rctx = rcanvas.getContext("2d");
       window.addEventListener("resize", resize);
       resize();
     },

@@ -1,7 +1,8 @@
 .ringdown-canvas {
   position: absolute;
-  top: 40px;
-  left: 460px;
-  width: 1000px;
-  height: 1000px;
+  top: 90px;
+  width: 900px;
+  height: 900px;
 }
+.ringdown-left { left: 30px; }
+.ringdown-right { left: 990px; }
