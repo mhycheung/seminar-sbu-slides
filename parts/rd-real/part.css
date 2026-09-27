@@ -8,8 +8,9 @@
   font-size: 96px;
 }
 
-#rd-real-hottake > h1.rd-real-red {
-  color: #d62728;
+/* Citations at body-text size (user, 2026-09-27). */
+.rd-real-fig .cite {
+  font-size: 40px;
 }
 
 .rd-real-fig {
