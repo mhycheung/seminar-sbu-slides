@@ -6,8 +6,9 @@
   var D = window.QNMFIT_DATA;
   var W = D.wave, F = D.fit;
   var FIT_COLOR = "#d62728";
-  var SWEEP_MS = 4000;             // stage 4: t0 = 2 -> 50 M_f
-  var STAGE_K = [null, 0, 1, 2];   // t0 / M_f shown at stages 1-3
+  var SWEEP_MS = 6000;             // stage 6: t0 = 4 -> 50 M_f
+  var STAGE_K = [null, 0, 1, 2, 3, 4];  // t0 / M_f shown at stages 1-5
+  var LAST = STAGE_K.length;             // the sweep stage
   var PLANE = { x0: 0.45, x1: 0.55, y0: 0.05, y1: 0.09 };
 
   function kIndex(k) { return Math.round(k * 10); }  // F.k = 0, 0.1, ..., 50
@@ -161,14 +162,15 @@
     else katex.render("t_0 = " + Math.round(F.k[cur]) + "\\, M_f", t0el);
   }
 
-  // Trail and current index of stage 1-3, or of the sweep at t0 = k (stage 4).
+  // Trail and current index of stages 1-5, or of the sweep at t0 = k (last stage).
   function stageIdx(stage, k) {
     var trail = [];
-    for (var s = 1; s < Math.min(stage, 4); s++) trail.push(kIndex(STAGE_K[s]));
-    if (stage < 4) return { cur: stage === 0 ? -1 : kIndex(STAGE_K[stage]), trail: trail };
-    trail.push(kIndex(2));
+    for (var s = 1; s < Math.min(stage, LAST); s++) trail.push(kIndex(STAGE_K[s]));
+    if (stage < LAST) return { cur: stage === 0 ? -1 : kIndex(STAGE_K[stage]), trail: trail };
+    var k0 = STAGE_K[LAST - 1];
+    trail.push(kIndex(k0));
     var cur = kIndex(k);
-    for (var i = kIndex(2) + 1; i < cur; i++) trail.push(i);
+    for (var i = kIndex(k0) + 1; i < cur; i++) trail.push(i);
     return { cur: cur, trail: trail };
   }
 
@@ -181,7 +183,7 @@
   function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
 
   Deck.widget("qnm-fit-sweep", {
-    steps: 4,
+    steps: LAST,
     enter: function (slide) {
       onResize = function () { if (state) show(slide, state.stage, state.k); };
       window.addEventListener("resize", onResize);
@@ -189,12 +191,12 @@
     leave: function () { stop(); window.removeEventListener("resize", onResize); },
     step: function (slide, stage, dir) {
       stop();
-      if (stage < 4 || dir < 0) { show(slide, stage, 50); return; }
+      if (stage < LAST || dir < 0) { show(slide, stage, 50); return; }
       var start = null;
       (function tick(now) {
         if (start === null) start = now;
         var u = Math.min(1, (now - start) / SWEEP_MS);
-        show(slide, 4, 2 + 48 * u);
+        show(slide, LAST, STAGE_K[LAST - 1] + (50 - STAGE_K[LAST - 1]) * u);
         raf = u < 1 ? requestAnimationFrame(tick) : null;
       })(performance.now());
     }
