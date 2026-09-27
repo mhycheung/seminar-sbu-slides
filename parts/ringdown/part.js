@@ -13,9 +13,10 @@
 //   starts the ringdown; then the complex plane.
 //
 // All shapes are drawn soft: a black core out to CORE r, fading outside as
-// exp(-((rho/r - CORE)/SOFT)^1.5), half opacity at rho = 1.18 r, 0.3 at 1.5 r. The remnant
-// horizon is a dark ring of the animation's final radius R_final, the light ring a yellow
-// dashed circle at LR R_final.
+// exp(-((rho/r - CORE)/SOFT)^1.5): 0.78 at rho = r, 0.53 at 1.5 r, 0.33 at 2 r, 0.10 at 3 r.
+// Each view's tail is tapered to zero at a radius Rt about its centre, so no canvas or
+// slide edge cuts it. The remnant horizon is a dark ring of the animation's final radius
+// R_final, the light ring a yellow dashed circle at LR R_final, labelled on ringdown-quad.
 // The quadrupole pictures are schematic: blob r(phi) = R [1 + eps A cos(m (phi - angle))].
 (function () {
   "use strict";
@@ -35,7 +36,7 @@
   var H = 0.26;             // strain shown at the peak of |h_22|
   var EPS = 0.35;           // quadrupole blob deformation at merger (as the merger view)
   var CORE = 0.4;           // radius of the solid core, in units of the local radius r
-  var SOFT = 1.0;           // width of the soft fall-off, in units of r
+  var SOFT = 1.5;           // width of the soft fall-off, in units of r
   var DS = 3;               // soft layers: one sample per DS x DS backing pixels
   var LR_COLOR = "#e0a000"; // light ring
   var LR = 1.5;             // light-ring radius / horizon radius (schematic)
@@ -167,9 +168,16 @@
     return ctx;
   }
 
+  // Opacity factor that takes a tail to zero between 0.75 Rt and Rt from a view's centre.
+  function taper(rho, Rt) {
+    var u = (rho - 0.75 * Rt) / (0.25 * Rt);
+    return u <= 0 ? 1 : u >= 1 ? 0 : 0.5 * (1 + Math.cos(Math.PI * u));
+  }
+
   // Merger view on canvas c: the field about the point (ox, oy) (M) at the canvas centre,
-  // sc CSS px per M, drawn with opacity softA(F^(-1/2)). Redraws only when t or the size changes.
-  function SoftMergerView(c, sc, ox, oy) {
+  // sc CSS px per M, drawn with opacity softA(F^(-1/2)), tapered at Rt (CSS px) from the
+  // centre. Redraws only when t or the size changes.
+  function SoftMergerView(c, sc, ox, oy, Rt) {
     var last = null;
     return {
       draw: function (t) {
@@ -179,9 +187,11 @@
         last = key;
         var m = model(t), cw = c.offsetWidth, ch = c.offsetHeight;
         renderSoft(c, function (x, y) {
-          var F = field(m, ox + (x - cw / 2) / sc, oy - (y - ch / 2) / sc);
-          return F < 0.03 ? 0 : softA(1 / Math.sqrt(F));
-        });
+          var dx = x - cw / 2, dy = y - ch / 2, w = taper(Math.sqrt(dx * dx + dy * dy), Rt);
+          if (w <= 0) return 0;
+          var F = field(m, ox + dx / sc, oy - dy / sc);
+          return F < 0.03 ? 0 : w * softA(1 / Math.sqrt(F));
+        }, [cw / 2 - Rt, ch / 2 - Rt, cw / 2 + Rt, ch / 2 + Rt]);
       }
     };
   }
@@ -191,14 +201,15 @@
   // r(phi) = R [1 + e cos(m (phi - ang))], phi counter-clockwise on screen, opacity scaled by
   // `op`; then the horizon (a dark ring of radius R with a thin white halo, so it shows on
   // black and on white) with opacity hor, and the light ring (yellow dashed circle at LR R)
-  // with opacity lr.
-  function hole(c, cx, cy, R, m, e, ang, op, hor, lr) {
-    var rmax = R * (1 + Math.abs(e)) * (CORE + SOFT_UMAX * SOFT);
+  // with opacity lr, labelled "light ring" along its top if `label`. The blob's tail is
+  // tapered at Rt (CSS px) from (cx, cy).
+  function hole(c, cx, cy, R, m, e, ang, op, hor, lr, Rt, label) {
+    var rmax = Math.min(Rt, R * (1 + Math.abs(e)) * (CORE + SOFT_UMAX * SOFT));
     var ctx = renderSoft(c, function (x, y) {
       var dx = x - cx, dy = cy - y, rho = Math.sqrt(dx * dx + dy * dy);
       if (rho > rmax) return 0;
       var r = R * (1 + e * Math.cos(m * (Math.atan2(dy, dx) - ang)));
-      return op * softA(rho / r);
+      return op * taper(rho, Rt) * softA(rho / r);
     }, [cx - rmax, cy - rmax, cx + rmax, cy + rmax]);
     if (hor > 0) {
       ctx.globalAlpha = hor;
@@ -211,8 +222,30 @@
       ctx.beginPath(); ctx.arc(cx, cy, LR * R, 0, 2 * Math.PI);
       ctx.setLineDash([16, 12]); ctx.lineWidth = 6; ctx.strokeStyle = LR_COLOR; ctx.stroke();
       ctx.setLineDash([]);
+      if (label) arcText(ctx, "light ring", cx, cy, LR * R + 14);
     }
     ctx.globalAlpha = 1;
+  }
+
+  // Text centred on the top of the circle of radius rad about (cx, cy), each letter upright
+  // to the circle, baseline on the circle; light-ring colour with a thin white outline.
+  function arcText(ctx, text, cx, cy, rad) {
+    ctx.font = "40px Arial";
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.lineJoin = "round";
+    var widths = text.split("").map(function (ch) { return ctx.measureText(ch).width; });
+    var total = widths.reduce(function (a, b) { return a + b; }, 0) / rad;
+    var a = -Math.PI / 2 - total / 2;
+    text.split("").forEach(function (ch, i) {
+      var da = widths[i] / rad, th = a + da / 2;
+      ctx.save();
+      ctx.translate(cx + rad * Math.cos(th), cy + rad * Math.sin(th));
+      ctx.rotate(th + Math.PI / 2);
+      ctx.lineWidth = 5; ctx.strokeStyle = "#fff"; ctx.strokeText(ch, 0, 0);
+      ctx.fillStyle = LR_COLOR; ctx.fillText(ch, 0, 0);
+      ctx.restore();
+      a += da;
+    });
   }
 
   // l = m = 2 blob of the NR remnant at time t: amplitude and phase of psi4_22, as in the
@@ -323,7 +356,7 @@
     Deck.widget("ringdown-merger", {
       steps: 2,
       enter: function (slide) {
-        view = SoftMergerView(slide.querySelector("#ringdown-canvas"), 900 / (2 * L), 0, 0);
+        view = SoftMergerView(slide.querySelector("#ringdown-canvas"), 900 / (2 * L), 0, 0, 470);
         rcanvas = slide.querySelector("#ringdown-ring");
         run = Runner(function (now) {
           var t = tAt(left, now);
@@ -356,14 +389,14 @@
       // Same scale as the left view (900 px for 2L); centre at slide (1440, 540), the same
       // height as the left one. The canvas covers the slide, so the fade is never cut.
       var q = quadNR(tAt(right, now)), R = D.Rfinal * (900 / (2 * L)) * val(par.zoom, now);
-      hole(rc, 1440, 540, R, 2, q.e, q.ang, val(par.blob, now), val(par.hor, now), val(par.lr, now));
+      hole(rc, 1440, 540, R, 2, q.e, q.ang, val(par.blob, now), val(par.hor, now), val(par.lr, now), 470, true);
     }
 
     Deck.widget("ringdown-quad", {
       steps: 11,
       enter: function (slide) {
         leftCanvas = slide.querySelector("#ringdown-quad-left");
-        view = SoftMergerView(leftCanvas, 900 / (2 * L), 0, 0);
+        view = SoftMergerView(leftCanvas, 900 / (2 * L), 0, 0, 470);
         rc = slide.querySelector("#ringdown-quad-right");
         lm = slide.querySelector("#ringdown-quad-lm");
         approx = slide.querySelector("#ringdown-quad-approx");
@@ -416,7 +449,7 @@
       steps: 4,
       enter: function (slide) {
         var s = sample(D.tCommon + 50);
-        view = SoftMergerView(slide.querySelector("#ringdown-sum-full"), 400 / 11, s.acx, s.acy);
+        view = SoftMergerView(slide.querySelector("#ringdown-sum-full"), 400 / 11, s.acx, s.acy, 255);
         modes = [2, 3, 4].map(function (m) { return [m, slide.querySelector("#ringdown-sum-" + m + m)]; });
         terms = slide.querySelector("#ringdown-sum-terms");
         planeBox = slide.querySelector("#ringdown-sum-plane");
@@ -430,7 +463,7 @@
           modes.forEach(function (mc) {
             var m = mc[0], q = quadQNM(m, t, ang0);
             var o = val(ov, now);
-            hole(mc[1], 300, 300, 52, m, MODE_EPS[m] * q.e, q.ang, 1, o, o);
+            hole(mc[1], 300, 300, 52, m, MODE_EPS[m] * q.e, q.ang, 1, o, o, 185, false);
           });
           plane.draw();
         });
