@@ -80,9 +80,9 @@
     ctx.stroke();
   }
 
-  function cross(p, x, y) {
-    var a = 14;
-    [["#fff", 9], ["#000", 4]].forEach(function (st) {
+  function cross(p, x, y, faint) {
+    var a = faint ? 11 : 14;
+    [["#fff", faint ? 6 : 9], [faint ? "#888" : "#000", faint ? 3 : 4]].forEach(function (st) {
       p.strokeStyle = st[0];
       p.lineWidth = st[1];
       p.beginPath();
@@ -292,6 +292,14 @@
       var f = frame(c, opt.plane.x, opt.plane.y, opt.plane.xt, opt.plane.yt, fixed(1), fixed(1));
       var p = c.ctx;
       clip(c, f);
+      // faint Kerr reference crosses under the tracks, from the first step
+      opt.refs.forEach(function (r) {
+        var w = M.refs[r.name], qx = f.X(w[0]), qy = f.Y(-w[1]);
+        cross(p, qx, qy, true);
+        var el = refLabel(slide, r.name);
+        el.style.left = (parseFloat(cv.style.left) + qx + r.dx) + "px";
+        el.style.top = (parseFloat(cv.style.top) + qy + r.dy) + "px";
+      });
       // faint tracks first, the marked track on top
       var order = [];
       for (var j = 0; j < n; j++) if (j !== M.hi) order.push(j);
@@ -318,6 +326,18 @@
       p.restore();
       var k = K[cur];
       katex.render("t_0 = " + (moving ? Math.round(k) : k) + "\\, M_f", slide.querySelector(".qnm-fit-t0"));
+    }
+
+    // Label div of a reference mode, made on first use.
+    function refLabel(slide, name) {
+      var el = slide.querySelector(".qnm-fit-ref-" + name);
+      if (!el) {
+        el = document.createElement("div");
+        el.className = "qnm-fit-q qnm-fit-ref qnm-fit-ref-" + name;
+        katex.render("\\omega_{" + name + "}", el);
+        slide.appendChild(el);
+      }
+      return el;
     }
 
     function show(slide, stage, k, moving) {
@@ -351,8 +371,13 @@
 
   // Plane ranges hold every fitted frequency except the unused mode at omega ~ 0 (or growing,
   // -M_f omega_i < 0, at the earliest t0), which falls below the lower edge.
-  many({ id: "qnm-fit-many22", key: "lm22", labelDx: 60, labelDy: 5,
+  // refs: Kerr modes marked faintly from the first step; dx, dy: label offset from the cross.
+  many({ id: "qnm-fit-many22", key: "lm22", labelDx: 16, labelDy: -8,
+    refs: [{ name: "220", dx: -30, dy: -62 }, { name: "221", dx: 12, dy: -58 },
+           { name: "320", dx: -95, dy: -62 }, { name: "330", dx: 8, dy: -62 }],
     plane: { x: [-0.45, 0.95], y: [0.02, 0.46], xt: range(-0.4, 0.8, 0.2), yt: range(0.1, 0.4, 0.1) } });
-  many({ id: "qnm-fit-many44", key: "lm44", labelDx: 20, labelDy: -85,
+  many({ id: "qnm-fit-many44", key: "lm44", labelDx: 16, labelDy: -8,
+    refs: [{ name: "220", dx: 12, dy: -58 }, { name: "330", dx: 12, dy: -58 }, { name: "440", dx: 12, dy: -62 },
+           { name: "540", dx: -95, dy: -62 }, { name: "550", dx: 8, dy: -62 }],
     plane: { x: [0.45, 1.6], y: [0.02, 0.46], xt: range(0.6, 1.6, 0.2), yt: range(0.1, 0.4, 0.1) } });
 })();

@@ -38,3 +38,8 @@
   background: rgba(255, 255, 255, 0.85);
   padding: 0 6px;
 }
+
+.qnm-fit-ref {
+  font-size: 34px;
+  opacity: 0.5;
+}
