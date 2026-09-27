@@ -11,8 +11,8 @@
   var FIT_COLOR = "#d62728";             // reconstructed waveform (matplotlib C3)
   var MODE_COLORS = ["#1f77b4", "#ff7f0e"];  // fitted frequencies: matplotlib C0, C1
   var STAGE_K = [null, 0, 1, 2, 3, 4];   // t0 / M_f shown at stages 1-5
-  var SWEEP_STAGE = STAGE_K.length;      // stage 6: sweep from t0 = 4 to 50 M_f
-  var SWEEP_MS = 6000;
+  var SWEEP_STAGE = STAGE_K.length;      // stage 6 on: sweep from t0 = 4 to 50 M_f
+  var SWEEP_RATE = 46 / 6000;            // M_f per ms: t0 = 4 -> 50 in 6 s
 
   function kIndex(k) { return Math.round(k * 10); }  // D.k = 0, 0.1, ..., 50
 
@@ -156,11 +156,12 @@
   }
 
   // One sweep slide. opt: id, fit (one entry per t0, lists over modes), plane {x, y, xt, yt},
-  // markers [{w, label, from}] (from: first stage at which the marker shows), steps.
+  // markers [{w, label, from}] (from: first stage at which the marker shows), pauses (t0 / M_f
+  // at which the sweep stops until the next key press).
   function sweep(opt) {
     var F = opt.fit, raf = null, state = null, onResize = null;
 
-    function draw(slide, stage, cur, trail) {
+    function draw(slide, stage, cur, trail, moving) {
       drawLeft(slide, F, cur);
       var cv = slide.querySelector(".qnm-fit-right");
       var cr = setup(cv);
@@ -191,26 +192,34 @@
       p.restore();
       var t0el = slide.querySelector(".qnm-fit-t0");
       if (cur < 0) t0el.innerHTML = "";
-      else katex.render("t_0 = " + Math.round(D.k[cur]) + "\\, M_f", t0el);
+      else {
+        // whole numbers while the sweep runs; one decimal when it rests on a non-integer t0
+        var k = D.k[cur], txt = moving || Math.abs(k - Math.round(k)) < 1e-6 ? String(Math.round(k)) : k.toFixed(1);
+        katex.render("t_0 = " + txt + "\\, M_f", t0el);
+      }
     }
 
-    // Trail and current index at a stage; k is t0 / M_f during the sweep (and after it).
-    function show(slide, stage, k) {
+    // The sweep after the fixed stages runs in segments between opt.pauses, one step each, at
+    // SWEEP_RATE M_f per ms. Stage SWEEP_STAGE + s plays segment s.
+    var ends = [STAGE_K[SWEEP_STAGE - 1]].concat(opt.pauses || [], [50]);
+
+    // Trail and current index at a stage; k is t0 / M_f during (and after) the sweep.
+    function show(slide, stage, k, moving) {
       state = { stage: stage, k: k };
       var trail = [], s;
       for (s = 1; s < Math.min(stage, SWEEP_STAGE); s++) trail.push(kIndex(STAGE_K[s]));
       if (stage === 0) return draw(slide, stage, -1, trail);
       if (stage < SWEEP_STAGE) return draw(slide, stage, kIndex(STAGE_K[stage]), trail);
-      var k0 = STAGE_K[SWEEP_STAGE - 1], cur = kIndex(k);
+      var k0 = ends[0], cur = kIndex(k);
       trail.push(kIndex(k0));
       for (var i = kIndex(k0) + 1; i < cur; i++) trail.push(i);
-      draw(slide, stage, cur, trail);
+      draw(slide, stage, cur, trail, moving);
     }
 
     function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
 
     Deck.widget(opt.id, {
-      steps: opt.steps,
+      steps: SWEEP_STAGE - 1 + ends.length - 1,
       enter: function (slide) {
         onResize = function () { if (state) show(slide, state.stage, state.k); };
         window.addEventListener("resize", onResize);
@@ -218,12 +227,14 @@
       leave: function () { stop(); window.removeEventListener("resize", onResize); },
       step: function (slide, stage, dir) {
         stop();
-        if (stage !== SWEEP_STAGE || dir < 0) { show(slide, stage, 50); return; }
-        var start = null, k0 = STAGE_K[SWEEP_STAGE - 1];
+        if (stage < SWEEP_STAGE) { show(slide, stage, 0); return; }
+        var a = ends[stage - SWEEP_STAGE], b = ends[stage - SWEEP_STAGE + 1];
+        if (dir < 0) { show(slide, stage, b); return; }
+        var start = null, ms = (b - a) / SWEEP_RATE;
         (function tick(now) {
           if (start === null) start = now;
-          var u = Math.min(1, (now - start) / SWEEP_MS);
-          show(slide, SWEEP_STAGE, k0 + (50 - k0) * u);
+          var u = Math.min(1, (now - start) / ms);
+          show(slide, stage, a + (b - a) * u, u < 1);
           raf = u < 1 ? requestAnimationFrame(tick) : null;
         })(performance.now());
       }
@@ -238,16 +249,25 @@
   }
 
   sweep({
-    id: "qnm-fit-sweep", fit: oneMode(D.fit), steps: SWEEP_STAGE,
+    id: "qnm-fit-sweep", fit: oneMode(D.fit),
     plane: { x: [0.45, 0.55], y: [0.05, 0.09], xt: range(0.46, 0.54, 0.02), yt: range(0.05, 0.09, 0.01) },
     markers: [{ w: D.w220, label: "220", from: 0 }]
   });
 
-  // Two modes; one step after the sweep shows the Kerr (3,2,0) frequency.
+  // t0 at which mode 1 of the two-mode fit is closest to the Kerr (2,2,1) frequency.
+  function closestTo221() {
+    var best = Infinity, kb = 0;
+    for (var i = 0; i < D.k.length; i++) {
+      var d = Math.hypot(D.fit2.wr[i][1] - D.w221[0], D.fit2.wi[i][1] - D.w221[1]);
+      if (d < best) { best = d; kb = D.k[i]; }
+    }
+    return kb;
+  }
+
+  // Two modes; the sweep pauses where mode 1 is closest to (2,2,1).
   sweep({
-    id: "qnm-fit-sweep2", fit: D.fit2, steps: SWEEP_STAGE + 1,
-    plane: { x: [0.38, 0.8], y: [0.04, 0.36], xt: range(0.4, 0.8, 0.1), yt: range(0.05, 0.35, 0.05) },
-    markers: [{ w: D.w220, label: "220", from: 0 }, { w: D.w221, label: "221", from: 0 },
-              { w: D.w320, label: "320", from: SWEEP_STAGE + 1 }]
+    id: "qnm-fit-sweep2", fit: D.fit2, pauses: [closestTo221()],
+    plane: { x: [0.38, 0.64], y: [0.04, 0.36], xt: range(0.4, 0.6, 0.05), yt: range(0.05, 0.35, 0.05) },
+    markers: [{ w: D.w220, label: "220", from: 0 }, { w: D.w221, label: "221", from: 0 }]
   });
 })();
