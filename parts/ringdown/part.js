@@ -228,11 +228,10 @@
   }
 
   // Text centred on the top of the circle of radius rad about (cx, cy), each letter upright
-  // to the circle, baseline on the circle; light-ring colour with a thin white outline.
+  // to the circle, baseline on the circle, in the light-ring colour.
   function arcText(ctx, text, cx, cy, rad) {
     ctx.font = "40px Arial";
     ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    ctx.lineJoin = "round";
     var widths = text.split("").map(function (ch) { return ctx.measureText(ch).width; });
     var total = widths.reduce(function (a, b) { return a + b; }, 0) / rad;
     var a = -Math.PI / 2 - total / 2;
@@ -241,7 +240,6 @@
       ctx.save();
       ctx.translate(cx + rad * Math.cos(th), cy + rad * Math.sin(th));
       ctx.rotate(th + Math.PI / 2);
-      ctx.lineWidth = 5; ctx.strokeStyle = "#fff"; ctx.strokeText(ch, 0, 0);
       ctx.fillStyle = LR_COLOR; ctx.fillText(ch, 0, 0);
       ctx.restore();
       a += da;
