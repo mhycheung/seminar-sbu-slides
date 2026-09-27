@@ -4,8 +4,8 @@
   width: 900px;
   height: 900px;
 }
-.ringdown-left { left: 30px; }
 .ringdown-right { left: 990px; }
+.ringdown-soft-left { left: 0; top: 0; width: 960px; height: 1080px; }
 .ringdown-quad-right { left: 0; top: 0; width: 1920px; height: 1080px; }
 .ringdown-op.ringdown-quad-approx { left: 960px; top: 540px; }
 .ringdown-fade { opacity: 0; transition: opacity 0.5s; }
@@ -36,8 +36,8 @@
 }
 .ringdown-plane-ylabel { transform: translate(-50%, -50%) rotate(-90deg); }
 .ringdown-plane-q { position: absolute; font-size: 36px; white-space: nowrap; }
-.ringdown-sum-full { position: absolute; left: 60px; top: 60px; width: 400px; height: 400px; }
-.ringdown-mode { position: absolute; top: 70px; width: 380px; height: 380px; }
+.ringdown-sum-full { position: absolute; left: 0; top: 0; width: 520px; height: 520px; }
+.ringdown-mode { position: absolute; top: -40px; width: 600px; height: 600px; }
 .ringdown-op {
   position: absolute;
   top: 260px;

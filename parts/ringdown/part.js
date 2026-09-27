@@ -12,9 +12,10 @@
 // ringdown-sum: the full ringdown = 22 + 33 + 44 + ..., frozen at merger until a step
 //   starts the ringdown; then the complex plane.
 //
-// From ringdown-quad on, shapes are drawn soft: a black core out to CORE r, fading outside
-// as exp(-((rho/r - CORE)/SOFT)^1.5), half opacity at rho = r. The remnant horizon is a
-// crisp black disc of the animation's final radius R_final, the light ring a dashed circle at LR R_final.
+// All shapes are drawn soft: a black core out to CORE r, fading outside as
+// exp(-((rho/r - CORE)/SOFT)^1.5), half opacity at rho = 1.18 r, 0.3 at 1.5 r. The remnant
+// horizon is a dark ring of the animation's final radius R_final, the light ring a yellow
+// dashed circle at LR R_final.
 // The quadrupole pictures are schematic: blob r(phi) = R [1 + eps A cos(m (phi - angle))].
 (function () {
   "use strict";
@@ -33,8 +34,10 @@
   var DOT = 11;             // test-mass radius, px
   var H = 0.26;             // strain shown at the peak of |h_22|
   var EPS = 0.35;           // quadrupole blob deformation at merger (as the merger view)
-  var CORE = 0.5;           // radius of the solid core, in units of the local radius r
-  var SOFT = 0.64;          // width of the soft fall-off, in units of r (half opacity at rho = r)
+  var CORE = 0.4;           // radius of the solid core, in units of the local radius r
+  var SOFT = 1.0;           // width of the soft fall-off, in units of r
+  var DS = 3;               // soft layers: one sample per DS x DS backing pixels
+  var LR_COLOR = "#e0a000"; // light ring
   var LR = 1.5;             // light-ring radius / horizon radius (schematic)
   var ZOOM = 1.6;           // zoom of the quadrupole view
   // Remnant of the run: M_f = 0.9555 M, a_f = 0.6870 (tasks/t04-ringdown/qnm_values.py).
@@ -119,35 +122,6 @@
     return (1 - m.w) * Fb + m.w * Math.min(rr * rr / (ex * ex + ey * ey + 1e-12), CAP);
   }
 
-  // Pixel boxes that contain the region F >= 1: one per body, merged when they overlap.
-  function boxes(m, sc, W, H2, ox, oy) {
-    var list = [];
-    function add(x, y, r) {
-      var pad = 3;
-      list.push([Math.floor(W / 2 + (x - ox - r) * sc) - pad, Math.floor(H2 / 2 - (y - oy + r) * sc) - pad,
-                 Math.ceil(W / 2 + (x - ox + r) * sc) + pad, Math.ceil(H2 / 2 - (y - oy - r) * sc) + pad]);
-    }
-    m.bh.forEach(function (b) { add(b[0], b[1], 1.8 * b[2]); });
-    if (m.rem) add(m.rem[0], m.rem[1], 1.8 * m.rem[2] * (1 + m.rem[3]));
-    var merged = true;
-    while (merged) {
-      merged = false;
-      for (var i = 0; i < list.length && !merged; i++) {
-        for (var j = i + 1; j < list.length && !merged; j++) {
-          var a = list[i], b = list[j];
-          if (a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3]) {
-            list[i] = [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])];
-            list.splice(j, 1);
-            merged = true;
-          }
-        }
-      }
-    }
-    return list.map(function (b) {
-      return [Math.max(0, b[0]), Math.max(0, b[1]), Math.min(W, b[2]), Math.min(H2, b[3])];
-    });
-  }
-
   // Soft opacity from q = rho / r: 1 in the core, then exp(-u^1.5), u = (q - CORE) / SOFT.
   var SOFT_UMAX = 3.3;      // u where the opacity is below 0.3%; cut off there
   function softA(q) {
@@ -156,22 +130,22 @@
     return u > SOFT_UMAX ? 0 : Math.exp(-Math.pow(u, 1.5));
   }
 
-  // Soft layer: opacity alphaAt(x, y) (CSS px, y down) of black, evaluated at half the
+  // Soft layer: opacity alphaAt(x, y) (CSS px, y down) of black, evaluated at 1/DS of the
   // backing resolution and scaled up with smoothing (the picture has no hard edges).
   // Optional box [x0, y0, x1, y1] (CSS px): alphaAt is 0 outside it and is not called there.
   function renderSoft(c, alphaAt, box) {
-    var k = fit(c), W = c.width, H2 = c.height, w = Math.ceil(W / 2), h = Math.ceil(H2 / 2);
+    var k = fit(c), W = c.width, H2 = c.height, w = Math.ceil(W / DS), h = Math.ceil(H2 / DS);
     var i0 = 0, j0 = 0, i1 = w, j1 = h;
     if (box) {
-      i0 = Math.max(0, Math.floor(box[0] * k / 2)); j0 = Math.max(0, Math.floor(box[1] * k / 2));
-      i1 = Math.min(w, Math.ceil(box[2] * k / 2)); j1 = Math.min(h, Math.ceil(box[3] * k / 2));
+      i0 = Math.max(0, Math.floor(box[0] * k / DS)); j0 = Math.max(0, Math.floor(box[1] * k / DS));
+      i1 = Math.min(w, Math.ceil(box[2] * k / DS)); j1 = Math.min(h, Math.ceil(box[3] * k / DS));
     }
     var ctx = c.getContext("2d");
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, H2);
     var bw = i1 - i0, bh = j1 - j0;
     if (bw > 0 && bh > 0) {
-      // Offscreen layer covering only the box, one pixel per 2 x 2 backing pixels.
+      // Offscreen layer covering only the box, one pixel per DS x DS backing pixels.
       var o = c.ringdownSoft;
       if (!o || o.width !== bw || o.height !== bh) {
         o = c.ringdownSoft = document.createElement("canvas");
@@ -179,22 +153,23 @@
       }
       var octx = o.getContext("2d"), img = octx.createImageData(bw, bh), p = img.data;
       for (var j = j0; j < j1; j++) {
-        var y = (2 * j + 1) / k;
+        var y = (j + 0.5) * DS / k;
         for (var i = i0; i < i1; i++) {
-          var a = alphaAt((2 * i + 1) / k, y);
+          var a = alphaAt((i + 0.5) * DS / k, y);
           if (a > 0) p[4 * ((j - j0) * bw + i - i0) + 3] = Math.round(255 * a);
         }
       }
       octx.putImageData(img, 0, 0);
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(o, 2 * i0, 2 * j0, 2 * bw, 2 * bh);
+      ctx.drawImage(o, DS * i0, DS * j0, DS * bw, DS * bh);
     }
     ctx.setTransform(k, 0, 0, k, 0, 0);
     return ctx;
   }
 
-  // Soft merger view: the same field, drawn with opacity softA(F^(-1/2)).
-  function SoftMergerView(c, half, ox, oy) {
+  // Merger view on canvas c: the field about the point (ox, oy) (M) at the canvas centre,
+  // sc CSS px per M, drawn with opacity softA(F^(-1/2)). Redraws only when t or the size changes.
+  function SoftMergerView(c, sc, ox, oy) {
     var last = null;
     return {
       draw: function (t) {
@@ -202,7 +177,7 @@
         var key = t + ":" + c.width;
         if (key === last) return;
         last = key;
-        var m = model(t), cw = c.offsetWidth, ch = c.offsetHeight, sc = cw / (2 * half);
+        var m = model(t), cw = c.offsetWidth, ch = c.offsetHeight;
         renderSoft(c, function (x, y) {
           var F = field(m, ox + (x - cw / 2) / sc, oy - (y - ch / 2) / sc);
           return F < 0.03 ? 0 : softA(1 / Math.sqrt(F));
@@ -211,52 +186,12 @@
     };
   }
 
-  // A merger view on canvas c: half-width `half` (M) about the point (ox, oy) (M).
-  // Black where F >= 1, transparent elsewhere; the edge is anti-aliased from the field
-  // gradient, so it stays sharp at any resolution. Redraws only when t or the size changes.
-  function MergerView(c, half, ox, oy) {
-    var ctx = c.getContext("2d"), last = null;
-    return {
-      draw: function (t) {
-        fit(c);
-        var W = c.width, H2 = c.height, key = t + ":" + W;
-        if (key === last) return;
-        last = key;
-        var sc = W / (2 * half), m = model(t);
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, W, H2);
-        boxes(m, sc, W, H2, ox, oy).forEach(function (b) {
-          var bw = b[2] - b[0], bh = b[3] - b[1];
-          if (bw <= 0 || bh <= 0) return;
-          var gw = bw + 2, F = new Float32Array(gw * (bh + 2)), i, j;
-          for (j = 0; j < bh + 2; j++) {
-            var Y = oy - (b[1] + j - 1 + 0.5 - H2 / 2) / sc;
-            for (i = 0; i < gw; i++) F[j * gw + i] = field(m, ox + (b[0] + i - 1 + 0.5 - W / 2) / sc, Y);
-          }
-          var img = ctx.createImageData(bw, bh), p = img.data;
-          for (j = 0; j < bh; j++) {
-            for (i = 0; i < bw; i++) {
-              var q = (j + 1) * gw + i + 1, f = F[q] - 1, a;
-              if (f > 2) a = 1;
-              else if (f < -0.9) a = 0;
-              else {
-                var gx = 0.5 * (F[q + 1] - F[q - 1]), gy = 0.5 * (F[q + gw] - F[q - gw]);
-                a = Math.max(0, Math.min(1, 0.5 + f / (Math.sqrt(gx * gx + gy * gy) + 1e-9)));
-              }
-              p[4 * (j * bw + i) + 3] = Math.round(255 * a);  // RGB stay 0: black
-            }
-          }
-          ctx.putImageData(img, b[0], b[1]);
-        });
-      }
-    };
-  }
-
   // ---------------- quadrupole blob, horizon, light ring ----------------
   // Soft blob on canvas c about (cx, cy) (CSS px, y down), core radius
   // r(phi) = R [1 + e cos(m (phi - ang))], phi counter-clockwise on screen, opacity scaled by
-  // `op`; then the horizon (crisp black disc of radius R, white edge) with opacity hor, and
-  // the light ring (dashed circle at LR R) with opacity lr.
+  // `op`; then the horizon (a dark ring of radius R with a thin white halo, so it shows on
+  // black and on white) with opacity hor, and the light ring (yellow dashed circle at LR R)
+  // with opacity lr.
   function hole(c, cx, cy, R, m, e, ang, op, hor, lr) {
     var rmax = R * (1 + Math.abs(e)) * (CORE + SOFT_UMAX * SOFT);
     var ctx = renderSoft(c, function (x, y) {
@@ -267,15 +202,14 @@
     }, [cx - rmax, cy - rmax, cx + rmax, cy + rmax]);
     if (hor > 0) {
       ctx.globalAlpha = hor;
-      ctx.beginPath(); ctx.arc(cx, cy, R + 2, 0, 2 * Math.PI);
-      ctx.lineWidth = 4; ctx.strokeStyle = "#fff"; ctx.stroke();
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI);
-      ctx.fillStyle = "#000"; ctx.fill();
+      ctx.lineWidth = 9; ctx.strokeStyle = "#fff"; ctx.stroke();
+      ctx.lineWidth = 5; ctx.strokeStyle = "#000"; ctx.stroke();
     }
     if (lr > 0) {
       ctx.globalAlpha = lr;
       ctx.beginPath(); ctx.arc(cx, cy, LR * R, 0, 2 * Math.PI);
-      ctx.setLineDash([16, 12]); ctx.lineWidth = 4; ctx.strokeStyle = "#000"; ctx.stroke();
+      ctx.setLineDash([16, 12]); ctx.lineWidth = 6; ctx.strokeStyle = LR_COLOR; ctx.stroke();
       ctx.setLineDash([]);
     }
     ctx.globalAlpha = 1;
@@ -389,7 +323,7 @@
     Deck.widget("ringdown-merger", {
       steps: 2,
       enter: function (slide) {
-        view = MergerView(slide.querySelector("#ringdown-canvas"), L, 0, 0);
+        view = SoftMergerView(slide.querySelector("#ringdown-canvas"), 900 / (2 * L), 0, 0);
         rcanvas = slide.querySelector("#ringdown-ring");
         run = Runner(function (now) {
           var t = tAt(left, now);
@@ -429,7 +363,7 @@
       steps: 11,
       enter: function (slide) {
         leftCanvas = slide.querySelector("#ringdown-quad-left");
-        view = SoftMergerView(leftCanvas, L, 0, 0);
+        view = SoftMergerView(leftCanvas, 900 / (2 * L), 0, 0);
         rc = slide.querySelector("#ringdown-quad-right");
         lm = slide.querySelector("#ringdown-quad-lm");
         approx = slide.querySelector("#ringdown-quad-approx");
@@ -470,19 +404,19 @@
   })();
 
   // ======================= slide 3: the sum of modes =======================
-  // Stage 0: the NR remnant, frozen at merger. Stage 1: "= 22 + 33 + 44 + ...", still frozen.
-  // Stage 2: the merger-to-ringdown loop starts, each l = m blob turning and decaying at its
-  // own QNM frequency, in step with it. Stage 3: the complex plane with 220, 221, 330, 331,
-  // 440, 441.
+  // Stage 0: the NR remnant, frozen at merger. Stage 1: "= 22 + 33 + 44 + ...", blobs only,
+  // still frozen. Stage 2: horizons and light rings on the blobs. Stage 3: the
+  // merger-to-ringdown loop starts, each l = m blob turning and decaying at its own QNM
+  // frequency, in step with it. Stage 4: the complex plane with 220, 221, 330, 331, 440, 441.
   (function () {
-    var view, modes, terms, planeBox, plane = null, run, loop;
+    var view, modes, terms, planeBox, plane = null, run, loop, ov = P(0);
     var MODE_EPS = { 2: EPS, 3: 0.3, 4: 0.25 };
 
     Deck.widget("ringdown-sum", {
-      steps: 3,
+      steps: 4,
       enter: function (slide) {
         var s = sample(D.tCommon + 50);
-        view = SoftMergerView(slide.querySelector("#ringdown-sum-full"), 5.5, s.acx, s.acy);
+        view = SoftMergerView(slide.querySelector("#ringdown-sum-full"), 400 / 11, s.acx, s.acy);
         modes = [2, 3, 4].map(function (m) { return [m, slide.querySelector("#ringdown-sum-" + m + m)]; });
         terms = slide.querySelector("#ringdown-sum-terms");
         planeBox = slide.querySelector("#ringdown-sum-plane");
@@ -495,7 +429,8 @@
           view.draw(t);
           modes.forEach(function (mc) {
             var m = mc[0], q = quadQNM(m, t, ang0);
-            hole(mc[1], 190, 190, 62, m, MODE_EPS[m] * q.e, q.ang, 1, 1, 1);
+            var o = val(ov, now);
+            hole(mc[1], 300, 300, 52, m, MODE_EPS[m] * q.e, q.ang, 1, o, o);
           });
           plane.draw();
         });
@@ -503,8 +438,9 @@
       },
       leave: function () { run.stop(); },
       step: function (slide, k, dir) {
-        var inst = dir < 0, on = k >= 3;
-        if (k < 2) loop = still(D.tCommon);
+        var inst = dir < 0, on = k >= 4;
+        set(ov, k >= 2 ? 1 : 0, performance.now(), inst || k !== 2, 500);
+        if (k < 3) loop = still(D.tCommon);
         else if (!loop.loop) loop = clip(D.tCommon, T_RD_END, SPEED_RINGDOWN, true, performance.now());
         fade(terms, k >= 1, inst);
         fade(planeBox, on, inst);
