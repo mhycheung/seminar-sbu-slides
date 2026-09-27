@@ -6,7 +6,8 @@
 }
 .ringdown-left { left: 30px; }
 .ringdown-right { left: 990px; }
-.ringdown-quad-right { top: 30px; }
+.ringdown-quad-right { left: 0; top: 0; width: 1920px; height: 1080px; }
+.ringdown-op.ringdown-quad-approx { left: 960px; top: 540px; }
 .ringdown-fade { opacity: 0; transition: opacity 0.5s; }
 .ringdown-lm {
   position: absolute;
