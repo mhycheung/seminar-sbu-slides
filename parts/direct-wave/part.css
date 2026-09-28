@@ -30,3 +30,14 @@
   opacity: 1;
   transition: opacity 0.8s ease;
 }
+
+/* Credit for the paper whose data the whole slide shows (single author: no "+"),
+   at body-text size (user, 2026-09-28). */
+.direct-wave-own {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 985px;
+  text-align: center;
+  font-size: 40px;
+}
