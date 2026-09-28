@@ -19,7 +19,10 @@ vujeva_fig3_lensing_rates.png: Vujeva+ (2608.07667) Fig. 3, figures/figure_3_len
 from the arXiv source (lit_cache/arxiv-2608.07667-src.tar.gz), rasterised with pdftoppm -r 300.
 Detections against year: GW events, strongly lensed, and IMBH+GC lensed (well below 1).
 
-science_article.png: NOT YET PRESENT. Screenshot of Science news, "Extreme black hole merger
-may be a cosmic illusion",
-https://www.science.org/content/article/extreme-black-hole-merger-may-be-cosmic-illusion .
-Headless Chromium gets a Cloudflare challenge there (tasks/t10-subhalo-lensing/S2/).
+goyal_source_posteriors.png, goyal_source_posteriors_legend.png: Goyal+ (2512.17631),
+figures/systematics_hvr.pdf (1D posteriors of detector-frame chirp mass, q, chi_1, chi_2 for
+unlensed, isolated and embedded point lens, three waveform models) rasterised with
+pdftoppm -r 400, and figures/systematics_legend_horr_new_1-3.pdf rasterised at -r 400 and
+cropped as in the paper (trim 20 pt left, 15 pt bottom: -x 111 -y 0 -W 2289 -H 317).
+The Bayes-factor row on the slide is typed from the paper's Table I (table_1.tex), embedded
+point lens: log10 B^L_U = 2.82 (NRSur), 5.0 (Phenom), 1.24 (SEOBNR).
