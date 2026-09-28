@@ -14,6 +14,7 @@
   top: 30px;
   left: 50px;
   color: #8b4513;
+  font-weight: bold;
 }
 
 .rd-real-collab {
@@ -148,8 +149,7 @@
   font-size: 40px;
 }
 
-/* The Silencio title is long: centre it between the "real data" and "ongoing work" labels. */
-#rd-real-silencio > h1.title,
-#rd-real-silencio > .rd-real-collab {
-  right: 105px;
-}
+/* The Silencio title is long: move it below the "real data" and "ongoing work" labels. */
+#rd-real-silencio > h1.title { top: 100px; }
+#rd-real-silencio > .rd-real-collab { top: 190px; }
+#rd-real-silencio > .rd-real-bullets { top: 290px; }
