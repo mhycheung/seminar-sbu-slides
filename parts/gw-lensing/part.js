@@ -8,10 +8,11 @@
 //   3  one path; the BBH runs again; the wave changes from unlensed to diffracted at the
 //      halo (h_L = IFFT[F(w) h(f)], F from GLoW for a cored isothermal sphere)
 //   4  lens plane with many rays source -> plane -> Earth (thin lens: straight segments)
-//   5  rays coloured by the time delay T(x) of their plane point; colour bar
-//   6  source, Earth, rays gone; the camera turns to face the plane, which moves left;
-//      contours of T in the same colours; the three images marked min, saddle, max
-//   7  empty plot frame on the right: Time, ~Area
+//   5  rays coloured by the time delay T(x) of their plane point; colour bar "T (dimensionless)"
+//   6  source, Earth, rays fade out; then the camera turns to face the plane, which moves left;
+//      contours of T in the same colours; the three images marked min, saddle, max (white
+//      rings; a red disc while the band stands at the image)
+//   7  empty plot frame on the right: T, (1/2pi) dA/dT
 //   8-10 one band between successive contours per step, filled red; its area on the plot
 //   11 the band moves out to the saddle image; 12 to the maximum image; 13 to the end
 //   14 |F(w)| panel below the time-domain plot
@@ -54,7 +55,7 @@
   var TEX = D.grid;         // lens-plane texture = grid of the band check (S1)
   var I_BOX0 = [1090, 150, 1800, 840], I_BOX1 = [1090, 60, 1800, 400], F_BOX = [1090, 530, 1800, 870];
   var I_Y = [0, 9], F_Y = [0, 7];
-  var CB = { w: 600, h: 26, y: 950 };      // colour bar
+  var CB = { w: 600, h: 26, y: 930 };      // colour bar; its label sits below the tick numbers
   var VIRIDIS = [[68, 1, 84], [72, 40, 120], [62, 74, 137], [49, 104, 142], [38, 130, 142],
                  [31, 158, 137], [53, 183, 121], [109, 205, 89], [180, 222, 44]];
 
@@ -90,17 +91,19 @@
   }
 
   // Eased parameter: from -> to over [t0, t0 + dur] (ms); linear if lin.
+  // Easing: false (in-out quadratic), true (linear), or "out" (quadratic ease-out).
   function P(v) { return { from: v, to: v, t0: 0, dur: 1, lin: false }; }
   function val(p, now) {
     var f = clamp((now - p.t0) / p.dur, 0, 1);
-    if (!p.lin) f = f < 0.5 ? 2 * f * f : 1 - 2 * (1 - f) * (1 - f);
+    if (p.lin === "out") f = 1 - (1 - f) * (1 - f);
+    else if (!p.lin) f = f < 0.5 ? 2 * f * f : 1 - 2 * (1 - f) * (1 - f);
     return p.from + (p.to - p.from) * f;
   }
   // Move p to target over dur ms, starting after delay ms (instant: at once).
   function set(p, target, now, instant, dur, lin, delay) {
     if (instant) { p.from = p.to = target; p.t0 = 0; return; }
     if (p.to === target) return;
-    p.from = val(p, now); p.to = target; p.t0 = now + (delay || 0); p.dur = dur || 800; p.lin = !!lin;
+    p.from = val(p, now); p.to = target; p.t0 = now + (delay || 0); p.dur = dur || 800; p.lin = lin || false;
   }
 
   function Runner(frame) {
@@ -184,8 +187,16 @@
   var tex = document.createElement("canvas"); tex.width = TEX; tex.height = TEX;
   var texKey = null;
   function cover(t, g, edge) { var c = 0.5 - (t - edge) / g; return c <= 0 ? 0 : c >= 1 ? 1 : c; }
+  // An image marker is a white ring (the band shows through it), and a filled red disc
+  // while the band stands at the image's tau: the min in the first band (stage 8), the
+  // saddle and the max at the ends of stages 11 and 12.
+  function reached(im, tauHi, bandOp) {
+    if (bandOp <= 0) return false;
+    return Math.abs(tauHi - (im.type === "min" ? DT : im.t)) < 1e-7;
+  }
   function drawTexture(tauHi, bandOp, contourOp, markOp) {
-    var key = tauHi.toFixed(6) + ":" + bandOp.toFixed(3) + ":" + contourOp.toFixed(3) + ":" + markOp.toFixed(3);
+    var red = D.images.map(function (im) { return reached(im, tauHi, bandOp) ? 1 : 0; }).join("");
+    var key = tauHi.toFixed(6) + ":" + bandOp.toFixed(3) + ":" + contourOp.toFixed(3) + ":" + markOp.toFixed(3) + ":" + red;
     if (key === texKey) return tex;
     texKey = key;
     var ctx = tex.getContext("2d");
@@ -215,10 +226,16 @@
     if (markOp > 0) {
       ctx.globalAlpha = markOp;
       ctx.font = "36px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.lineJoin = "round";
-      D.images.forEach(function (im) {
+      D.images.forEach(function (im, n) {
         var x = (im.x1 + D.viewHalf) / (2 * D.viewHalf) * TEX, y = (D.viewHalf - im.x2) / (2 * D.viewHalf) * TEX;
-        ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(x, y, 10, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, 10, 0, 2 * Math.PI);
+        if (red.charAt(n) === "1") {
+          ctx.fillStyle = rgba(BAND_RED, 1); ctx.strokeStyle = "#000"; ctx.lineWidth = 3;
+          ctx.fill(); ctx.stroke();
+        } else {
+          ctx.strokeStyle = "#000"; ctx.lineWidth = 7; ctx.stroke();
+          ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; ctx.stroke();
+        }
         // label placement: saddle to the left, max below, min to the right
         var lx = x, ly = y;
         if (im.type === "saddle") { ctx.textAlign = "right"; ctx.textBaseline = "middle"; lx = x - 20; }
@@ -294,9 +311,14 @@
     ctx.drawImage(bbhLayer, 0, 0, DS * w, DS * w);
   }
 
-  // Source clock: seconds since emission started -> NR time (loops with a hold).
-  var PERIOD = (LOOP_T1 - LOOP_T0) / NR_SPEED + LOOP_HOLD;
-  function nrTime(sec) { var e = sec % PERIOD; return Math.min(LOOP_T1, LOOP_T0 + NR_SPEED * e); }
+  // Source clock: seconds since emission started -> NR time (loops with a hold). A loop
+  // restarts only after the previous pulse has reached the Earth on every path: stage 1
+  // waits for the lower path (TRAVEL + DELAY), stage 3 for the one path; stages 4-5 have
+  // no waves and use the short loop.
+  var EMIT = (LOOP_T1 - LOOP_T0) / NR_SPEED;
+  var PER_1 = EMIT + TRAVEL + DELAY + 0.3, PER_3 = EMIT + TRAVEL + 0.3, PER_BBH = EMIT + LOOP_HOLD;
+  var period = PER_1, pending = null;    // pending: {period, at (ms)}, a switch at a loop boundary
+  function nrTime(sec) { var e = sec % period; return Math.min(LOOP_T1, LOOP_T0 + NR_SPEED * e); }
   var HL_MAX = Math.max.apply(null, WV.hL.map(Math.abs));
   // Strain and envelope emitted `sec` seconds after the clock start; lensed if L.
   function emit(sec, L) {
@@ -434,14 +456,12 @@
       ctx.beginPath(); ctx.moveTo(x, y0 + CB.h); ctx.lineTo(x, y0 + CB.h + 8); ctx.stroke();
       ctx.fillText(t === 0 ? "0" : t.toFixed(1), x, y0 + CB.h + 10);
     });
-    ctx.font = "32px Arial"; ctx.textBaseline = "bottom";
-    ctx.fillText("Time delay", cx, y0 - 8);
     ctx.restore();
   }
 
   // Ray points on the lens plane: rings, denser near the centre.
   var RAYS = (function () {
-    var pts = [[0, 0]], rings = [[0.25, 8], [0.55, 12], [0.9, 16], [1.3, 20], [1.75, 24], [2.2, 28], [2.45, 30]];
+    var pts = [[0, 0]], rings = [[0.25, 4], [0.55, 6], [0.9, 8], [1.3, 10], [1.75, 12], [2.2, 14], [2.45, 15]];
     rings.forEach(function (rn) {
       for (var i = 0; i < rn[1]; i++) {
         var a = 2 * Math.PI * (i + 0.5 * (rn[0] > 1 ? 1 : 0)) / rn[1];
@@ -505,6 +525,7 @@
   }
 
   function frame(now) {
+    if (pending && now >= pending.at) { clock = pending.at; period = pending.period; pending = null; }
     var k = fit(scene), ctx = scene.getContext("2d");
     ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.clearRect(0, 0, 1920, 1080);
@@ -569,7 +590,8 @@
 
     // labels
     place(labels.it_x, (ib[0] + ib[2]) / 2, ib[3] + 70, v.frame);
-    place(labels.it_y, ib[0] - 80, (ib[1] + ib[3]) / 2, v.frame);
+    place(labels.it_y, ib[0] - 90, (ib[1] + ib[3]) / 2, v.frame);
+    place(labels.cb, lerp(960, PLANE_CX, v.cam), CB.y + CB.h + 92, v.cbar);
     place(labels.f_x, (F_BOX[0] + F_BOX[2]) / 2, F_BOX[3] + 70, v.layout);
     place(labels.f_y, F_BOX[0] - 80, (F_BOX[1] + F_BOX[3]) / 2, v.layout);
     citePlot.style.opacity = v.frame;
@@ -587,7 +609,8 @@
       if (!labels) {
         var box = slide.querySelector("#gw-lensing-labels");
         labels = {
-          it_x: makeLabel(box, "Time"), it_y: makeLabel(box, "~Area", true),
+          it_x: makeLabel(box, "$T"), it_y: makeLabel(box, "$\\frac{1}{2\\pi}\\frac{\\mathrm{d}A}{\\mathrm{d}T}", true),
+          cb: makeLabel(box, "$T\\ \\text{(dimensionless)}"),
           f_x: makeLabel(box, "$w"), f_y: makeLabel(box, "$\\lvert F(w)\\rvert", true)
         };
       }
@@ -599,12 +622,17 @@
       var now = performance.now(), inst = dir < 0;
       // source clock: waves start from the source on entering stages 1 and 3; the BBH
       // stops in stage 2
-      if (k === 0) { clock = null; freezeT = null; }
-      else if (k === 2) { freezeT = inst ? LOOP_T0 : srcTime(now); }
+      var per = k === 1 ? PER_1 : k === 3 ? PER_3 : PER_BBH;
+      if (k === 0) { clock = null; freezeT = null; period = PER_1; pending = null; }
+      else if (k === 2) { freezeT = inst ? LOOP_T0 : srcTime(now); pending = null; }
       else {
         freezeT = null;
-        if (inst) clock = now - 20000;
-        else if (k === 1 || k === 3 || clock === null) clock = now;
+        if (inst || k === 1 || k === 3 || clock === null) {
+          period = per; pending = null; clock = inst ? now - 20000 : now;
+        } else if (per !== period && !pending) {
+          // finish the running loop (its pulse still travelling), then switch
+          pending = { period: per, at: clock + (Math.floor((now - clock) / 1000 / period) + 1) * period * 1000 };
+        }
       }
       set(p.light, k === 0 ? 1 : 0, now, inst, 900);
       set(p.bbh, k >= 1 && k <= 5 ? 1 : 0, now, inst, 900);
@@ -617,14 +645,17 @@
       set(p.rayColor, k >= 5 ? 1 : 0, now, inst, 1200);
       set(p.cbar, k >= 5 ? 1 : 0, now, inst, 900);
       set(p.scene, k <= 5 ? 1 : 0, now, inst, 900);
-      set(p.cam, k >= 6 ? 1 : 0, now, inst, 2200);
-      set(p.contour, k >= 6 ? 1 : 0, now, inst, 1200);
-      set(p.marks, k >= 6 ? 1 : 0, now, inst, 600, false, k === 6 ? 2000 : 0);
+      // stage 6: rays, source and Earth fade out first; then the camera turns
+      set(p.cam, k >= 6 ? 1 : 0, now, inst, 2200, false, k === 6 ? 900 : 0);
+      set(p.contour, k >= 6 ? 1 : 0, now, inst, 1200, false, k === 6 ? 900 : 0);
+      set(p.marks, k >= 6 ? 1 : 0, now, inst, 600, false, k === 6 ? 2900 : 0);
       set(p.frame, k >= 7 ? 1 : 0, now, inst, 700);
       set(p.band, k >= 8 ? 1 : 0, now, inst, 300);
       var tau = k < 8 ? 0 : k <= 10 ? (k - 7) * DT : k === 11 ? TAU_S : k === 12 ? TAU_M : TAU_END;
       if (k <= 10) set(p.tau, tau, now, true);
-      else set(p.tau, tau, now, inst, k === 11 ? 2000 : k === 12 ? 2500 : 6000, true);
+      // stage 12 eases out: the hole T >= tau around the maximum has radius ~ sqrt(tau_M - tau),
+      // so with ease-out it shrinks at a steady rate and closes as the band stops
+      else set(p.tau, tau, now, inst, k === 11 ? 2000 : k === 12 ? 2500 : 6000, k === 12 ? "out" : true);
       set(p.layout, k >= 14 ? 1 : 0, now, inst, 1200);
       set(p.fprog, k >= 14 ? 1 : 0, now, inst, 2500, true, k === 14 ? 1000 : 0);
     }

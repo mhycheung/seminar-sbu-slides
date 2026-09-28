@@ -26,3 +26,4 @@
   transition: opacity 0.6s;
 }
 .gw-lensing-hide { opacity: 0; }
+.gw-lensing-cite .cite { font-size: 36px; }
