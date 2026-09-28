@@ -1,23 +1,25 @@
-// Gravitational-wave lensing. Two slides.
-//
-// gw-lensing-main (13 steps). A 3D scene seen nearly from the side (perspective camera,
-// optical axis left to right), then the lens plane face-on and the contour method.
-//   0  large diffuse halo, a light source on the left, Earth on the right, two bent rays
+// Gravitational-wave lensing, one slide (gw-lensing-main, 14 steps). A 3D scene seen
+// nearly from the side (perspective camera, optical axis left to right), then the lens
+// plane face-on and the contour method for the time-domain amplification factor.
+//   0  large dark diffuse halo, a light source on the left, Earth on the right, two smooth rays
 //   1  the source becomes a merging BBH (NR data of the ringdown part); gravitational
 //      waves travel along the same two paths; the lower one arrives later (schematic lag)
-//   2  the halo shrinks; one path; the wave changes from unlensed to diffracted at the halo
-//      (h_L = IFFT[F(w) h(f)], F from GLoW for a cored isothermal sphere)
-//   3  lens plane with many rays source -> plane -> Earth
-//   4  rays coloured by the time delay T(x) of their plane point
-//   5  source, Earth, rays gone; the camera turns to face the plane, which moves left; contours of T
-//   6  empty plot frame on the right: time, ~Area
-//   7-9  one band between successive contours per step, filled red; its area on the plot
-//   10 the band moves out to the saddle image; 11 to the maximum image; 12 to the end
-//   13 |F(w)| panel below the time-domain plot
-// gw-lensing-vary: I(tau) and |F(w)| redrawn while the source position y loops.
+//   2  waves and paths fade, the BBH stops; then the halo shrinks
+//   3  one path; the BBH runs again; the wave changes from unlensed to diffracted at the
+//      halo (h_L = IFFT[F(w) h(f)], F from GLoW for a cored isothermal sphere)
+//   4  lens plane with many rays source -> plane -> Earth (thin lens: straight segments)
+//   5  rays coloured by the time delay T(x) of their plane point; colour bar
+//   6  source, Earth, rays gone; the camera turns to face the plane, which moves left;
+//      contours of T in the same colours; the three images marked min, saddle, max
+//   7  empty plot frame on the right: Time, ~Area
+//   8-10 one band between successive contours per step, filled red; its area on the plot
+//   11 the band moves out to the saddle image; 12 to the maximum image; 13 to the end
+//   14 |F(w)| panel below the time-domain plot
 //
 // Lens: cored isothermal sphere, psi(x) = psi0 (r + rc ln(2 rc/(r + rc))), r = sqrt(x^2 + rc^2),
-// T(x) = |x - y|^2/2 - psi(x) (GLoW 0.1). Numbers and checks: tasks/t08-gw-lensing/S1/.
+// T(x) = |x - y|^2/2 - psi(x) (GLoW 0.1), y along x1. Numbers and checks: tasks/t08-gw-lensing/S1/.
+// World axes: x along the line of sight, y up; lens-plane x1 -> world -z, x2 -> world y, so
+// that the face-on plane shows x1 to the right (the images on the horizontal axis).
 (function () {
   "use strict";
 
@@ -30,26 +32,29 @@
   var PITCH0 = 0.17;        // rad; camera elevation in the side view
   var PLANE_H = 0.45;       // half size of the lens plane, world units
   var XS = PLANE_H / D.viewHalf;           // world units per lens-plane unit
-  var SRC = [-1, 2 * D.y * XS, 0];         // straight line to Earth crosses the plane at y
+  var SRC = [-1, 0, -2 * D.y * XS];        // straight line to Earth crosses the plane at x1 = y
   var EARTH = [1, 0, 0];
   var LENS = [0, 0, 0];
   var IMG_UP = [0, 0.37, 0], IMG_DN = [0, -0.31, 0];  // ray-optics images of the large halo
+  var GAP_SRC = 0.09, GAP_EARTH = 0.13;    // world units kept free at the ends of the smooth paths
   var HALO_R = 0.36;        // halo size (world units) in stages 0-1
   var HALO_SMALL = 0.14;    // relative halo size from stage 2
-  var PLANE_CX = 500, PLANE_HALF_PX = 420;  // face-on lens plane on the slide
+  var PLANE_CX = 500, PLANE_CY = 490, PLANE_HALF_PX = 390;  // face-on lens plane on the slide
   var ZOOM2D = PLANE_HALF_PX / (PX * PLANE_H);
-  var TRAVEL = 3.0;         // s, travel time source -> Earth
-  var DELAY = 1.1;          // s, extra travel time of the lower path (schematic)
-  var AMP = 0.045;          // world units of transverse displacement at the unlensed peak
+  var TRAVEL = 4.0;         // s, travel time source -> Earth
+  var DELAY = 1.4;          // s, extra travel time of the lower path (schematic)
+  var AMP = 0.035;          // world units of transverse displacement at the unlensed peak
   var GAIN_L = 1.6;         // displayed peak of the diffracted wave / unlensed peak (schematic;
-                            // the computed ratio is D.wave.hL max, about 6)
-  var LOOP_T0 = 610, LOOP_T1 = 850, NR_SPEED = 55, LOOP_HOLD = 0.8;  // BBH loop, M and s
+                            // the computed ratio, max |h_L| / max |h|, is 6.1)
+  var LOOP_T0 = 650, LOOP_T1 = 850, NR_SPEED = 90, LOOP_HOLD = 0.8;  // BBH loop, M and s
   var SC_BBH = 11;          // px per M for the BBH at the source
+  var EARTH_R = 60;         // px, Earth radius at the lens distance
   var BAND_RED = [205, 55, 40];
   var TAU_S = D.images[1].t, TAU_M = D.images[2].t, TAU_END = D.tauMax, DT = D.dtau;
-  var N = D.grid, TEX = 2 * N;            // lens-plane grid and texture size
-  var I_BOX0 = [1090, 170, 1800, 860], I_BOX1 = [1090, 80, 1800, 450], F_BOX = [1090, 590, 1800, 960];
+  var TEX = D.grid;         // lens-plane texture = grid of the band check (S1)
+  var I_BOX0 = [1090, 150, 1800, 840], I_BOX1 = [1090, 60, 1800, 400], F_BOX = [1090, 530, 1800, 870];
   var I_Y = [0, 9], F_Y = [0, 7];
+  var CB = { w: 600, h: 26, y: 950 };      // colour bar
   var VIRIDIS = [[68, 1, 84], [72, 40, 120], [62, 74, 137], [49, 104, 142], [38, 130, 142],
                  [31, 158, 137], [53, 183, 121], [109, 205, 89], [180, 222, 44]];
 
@@ -91,10 +96,11 @@
     if (!p.lin) f = f < 0.5 ? 2 * f * f : 1 - 2 * (1 - f) * (1 - f);
     return p.from + (p.to - p.from) * f;
   }
-  function set(p, target, now, instant, dur, lin) {
+  // Move p to target over dur ms, starting after delay ms (instant: at once).
+  function set(p, target, now, instant, dur, lin, delay) {
     if (instant) { p.from = p.to = target; p.t0 = 0; return; }
     if (p.to === target) return;
-    p.from = val(p, now); p.to = target; p.t0 = now; p.dur = dur || 800; p.lin = !!lin;
+    p.from = val(p, now); p.to = target; p.t0 = now + (delay || 0); p.dur = dur || 800; p.lin = !!lin;
   }
 
   function Runner(frame) {
@@ -106,6 +112,7 @@
     };
   }
 
+  // Label: plain text in Arial, or KaTeX if the text starts with "$".
   function makeLabel(parent, tex, rot) {
     var el = document.createElement("div");
     el.className = "gw-lensing-label" + (rot ? " gw-lensing-label-rot" : "");
@@ -124,51 +131,61 @@
   }
   function T(x1, x2) { return 0.5 * ((x1 - D.y) * (x1 - D.y) + x2 * x2) - psi(Math.sqrt(x1 * x1 + x2 * x2)) - D.tauMin; }
 
-  // Grid: column i <-> x2 from +h to -h, row j <-> x1 from +h to -h (as the texture).
-  var TG = new Float32Array(N * N);
+  // Texture grid: column i <-> x1 from -h to +h, row j <-> x2 from +h to -h.
+  // TG: T - tau_min at pixel centres; GR: |grad T| in units per texture pixel (for
+  // anti-aliased band edges).
+  var TG = new Float32Array(TEX * TEX), GR = new Float32Array(TEX * TEX);
+  function texX1(i) { return -D.viewHalf + (i + 0.5) * 2 * D.viewHalf / TEX; }
+  function texX2(j) { return D.viewHalf - (j + 0.5) * 2 * D.viewHalf / TEX; }
   (function () {
-    var h = D.viewHalf;
-    for (var j = 0; j < N; j++) for (var i = 0; i < N; i++)
-      TG[j * N + i] = T(h - (j + 0.5) * 2 * h / N, h - (i + 0.5) * 2 * h / N);
+    for (var j = 0; j < TEX; j++) for (var i = 0; i < TEX; i++) TG[j * TEX + i] = T(texX1(i), texX2(j));
+    for (j = 0; j < TEX; j++) for (i = 0; i < TEX; i++) {
+      var i0 = Math.max(0, i - 1), i1 = Math.min(TEX - 1, i + 1), j0 = Math.max(0, j - 1), j1 = Math.min(TEX - 1, j + 1);
+      var gx = (TG[j * TEX + i1] - TG[j * TEX + i0]) / (i1 - i0), gy = (TG[j1 * TEX + i] - TG[j0 * TEX + i]) / (j1 - j0);
+      GR[j * TEX + i] = Math.max(Math.sqrt(gx * gx + gy * gy), 1e-7);
+    }
   })();
 
-  // Contour segments (texture px) of T at the band edges k DT, marching squares.
-  var SEGS = (function () {
-    var out = [], sc = TEX / N;
+  // Contour layer: T at the band edges k DT, marching squares on the texture grid, each
+  // level in its colour-map colour. Drawn once.
+  var contourLayer = null;
+  function contours() {
+    if (contourLayer) return contourLayer;
+    contourLayer = document.createElement("canvas"); contourLayer.width = TEX; contourLayer.height = TEX;
+    var ctx = contourLayer.getContext("2d");
+    ctx.lineWidth = 2.6;
+    ctx.lineJoin = "round";
     for (var k = 1; k * DT <= TAU_END + 1e-9; k++) {
       var L = k * DT;
-      for (var j = 0; j < N - 1; j++) for (var i = 0; i < N - 1; i++) {
-        var a = TG[j * N + i] - L, b = TG[j * N + i + 1] - L, c = TG[(j + 1) * N + i + 1] - L, d = TG[(j + 1) * N + i] - L;
+      ctx.strokeStyle = rgba(viridis(L / TAU_END), 1);
+      ctx.beginPath();
+      for (var j = 0; j < TEX - 1; j++) for (var i = 0; i < TEX - 1; i++) {
+        var a = TG[j * TEX + i] - L, b = TG[j * TEX + i + 1] - L, c = TG[(j + 1) * TEX + i + 1] - L, d = TG[(j + 1) * TEX + i] - L;
+        if ((a < 0) === (b < 0) && (b < 0) === (c < 0) && (c < 0) === (d < 0)) continue;
         var p = [];
         if ((a < 0) !== (b < 0)) p.push([i + a / (a - b), j]);
         if ((b < 0) !== (c < 0)) p.push([i + 1, j + b / (b - c)]);
         if ((d < 0) !== (c < 0)) p.push([i + d / (d - c), j + 1]);
         if ((a < 0) !== (d < 0)) p.push([i, j + a / (a - d)]);
-        for (var q = 0; q + 1 < p.length; q += 2)
-          out.push([(p[q][0] + 0.5) * sc, (p[q][1] + 0.5) * sc, (p[q + 1][0] + 0.5) * sc, (p[q + 1][1] + 0.5) * sc]);
+        for (var q = 0; q + 1 < p.length; q += 2) {
+          ctx.moveTo(p[q][0] + 0.5, p[q][1] + 0.5); ctx.lineTo(p[q + 1][0] + 0.5, p[q + 1][1] + 0.5);
+        }
       }
+      ctx.stroke();
     }
-    return out;
-  })();
-
-  // Lens-plane texture: translucent plane, swept region (light red), current band (red),
-  // contour lines. Cached by its inputs.
-  var texBand = document.createElement("canvas"); texBand.width = N; texBand.height = N;
-  var tex = document.createElement("canvas"); tex.width = TEX; tex.height = TEX;
-  var texKey = null, contourLayer = null;
-  function contours() {
-    if (contourLayer) return contourLayer;
-    contourLayer = document.createElement("canvas"); contourLayer.width = TEX; contourLayer.height = TEX;
-    var ctx = contourLayer.getContext("2d");
-    ctx.strokeStyle = "rgba(40,40,40,0.8)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (var s = 0; s < SEGS.length; s++) { var g = SEGS[s]; ctx.moveTo(g[0], g[1]); ctx.lineTo(g[2], g[3]); }
-    ctx.stroke();
     return contourLayer;
   }
-  function drawTexture(tauHi, bandOp, contourOp) {
-    var key = tauHi.toFixed(5) + ":" + bandOp.toFixed(3) + ":" + contourOp.toFixed(3);
+
+  // Lens-plane texture: translucent plane, swept region (light red), current band (red),
+  // contour lines, image markers. Band edges are anti-aliased: the covered fraction of a
+  // pixel is clamp(1/2 - (T - edge) / |grad T|). Cached by its inputs.
+  var bandLayer = document.createElement("canvas"); bandLayer.width = TEX; bandLayer.height = TEX;
+  var bandImg = null;
+  var tex = document.createElement("canvas"); tex.width = TEX; tex.height = TEX;
+  var texKey = null;
+  function cover(t, g, edge) { var c = 0.5 - (t - edge) / g; return c <= 0 ? 0 : c >= 1 ? 1 : c; }
+  function drawTexture(tauHi, bandOp, contourOp, markOp) {
+    var key = tauHi.toFixed(6) + ":" + bandOp.toFixed(3) + ":" + contourOp.toFixed(3) + ":" + markOp.toFixed(3);
     if (key === texKey) return tex;
     texKey = key;
     var ctx = tex.getContext("2d");
@@ -176,21 +193,42 @@
     ctx.fillStyle = "rgba(110,110,150,0.10)";
     ctx.fillRect(0, 0, TEX, TEX);
     if (bandOp > 0 && tauHi > 0) {
-      var bctx = texBand.getContext("2d"), img = bctx.createImageData(N, N), p = img.data;
-      var lo = tauHi - DT;
-      for (var n = 0; n < N * N; n++) {
-        var t = TG[n];
-        if (t >= tauHi) continue;
-        p[4 * n] = BAND_RED[0]; p[4 * n + 1] = BAND_RED[1]; p[4 * n + 2] = BAND_RED[2];
-        p[4 * n + 3] = Math.round(255 * bandOp * (t >= lo ? 0.9 : 0.22));
+      var bctx = bandLayer.getContext("2d");
+      if (!bandImg) bandImg = bctx.createImageData(TEX, TEX);
+      var p = bandImg.data, lo = tauHi - DT, n4;
+      for (var n = 0; n < TEX * TEX; n++) {
+        var t = TG[n], g = GR[n];
+        n4 = 4 * n;
+        if (t >= tauHi + g) { p[n4 + 3] = 0; continue; }
+        var cHi = cover(t, g, tauHi), cLo = lo > 0 ? cover(t, g, lo) : 0;
+        p[n4] = BAND_RED[0]; p[n4 + 1] = BAND_RED[1]; p[n4 + 2] = BAND_RED[2];
+        p[n4 + 3] = Math.round(255 * bandOp * (0.9 * (cHi - cLo) + 0.22 * cLo));
       }
-      bctx.putImageData(img, 0, 0);
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(texBand, 0, 0, TEX, TEX);
+      bctx.putImageData(bandImg, 0, 0);
+      ctx.drawImage(bandLayer, 0, 0);
     }
     if (contourOp > 0) {
       ctx.globalAlpha = contourOp;
       ctx.drawImage(contours(), 0, 0);
+      ctx.globalAlpha = 1;
+    }
+    if (markOp > 0) {
+      ctx.globalAlpha = markOp;
+      ctx.font = "36px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.lineJoin = "round";
+      D.images.forEach(function (im) {
+        var x = (im.x1 + D.viewHalf) / (2 * D.viewHalf) * TEX, y = (D.viewHalf - im.x2) / (2 * D.viewHalf) * TEX;
+        ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(x, y, 10, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+        // label placement: saddle to the left, max below, min to the right
+        var lx = x, ly = y;
+        if (im.type === "saddle") { ctx.textAlign = "right"; ctx.textBaseline = "middle"; lx = x - 20; }
+        else if (im.type === "max") { ctx.textAlign = "center"; ctx.textBaseline = "top"; ly = y + 18; }
+        else { ctx.textAlign = "left"; ctx.textBaseline = "middle"; lx = x + 20; }
+        ctx.lineWidth = 7; ctx.strokeStyle = "#fff";
+        ctx.strokeText(im.type, lx, ly);
+        ctx.fillStyle = "#000";
+        ctx.fillText(im.type, lx, ly);
+      });
       ctx.globalAlpha = 1;
     }
     ctx.strokeStyle = "rgba(60,60,90,0.6)";
@@ -204,13 +242,13 @@
     var yaw = lerp(YAW0, Math.PI / 2, u), pitch = lerp(PITCH0, 0, u);
     var C = [CAMD * Math.sin(yaw) * Math.cos(pitch), CAMD * Math.sin(pitch), CAMD * Math.cos(yaw) * Math.cos(pitch)];
     var f = norm([-C[0], -C[1], -C[2]]), r = norm(cross(f, [0, 1, 0])), up = cross(r, f);
-    return { C: C, f: f, r: r, up: up, k: PX * CAMD * lerp(1, ZOOM2D, u), ox: lerp(960, PLANE_CX, u), oy: 540 };
+    return { C: C, f: f, r: r, up: up, k: PX * CAMD * lerp(1, ZOOM2D, u), ox: lerp(960, PLANE_CX, u), oy: lerp(540, PLANE_CY, u) };
   }
   function proj(cam, p) {
     var d = sub(p, cam.C), z = dot(d, cam.f);
     return [cam.ox + cam.k * dot(d, cam.r) / z, cam.oy - cam.k * dot(d, cam.up) / z, cam.k / z / PX];
   }
-  function planePoint(x1, x2) { return [0, x1 * XS, x2 * XS]; }
+  function planePoint(x1, x2) { return [0, x2 * XS, -x1 * XS]; }
 
   // ---------------- source: BBH from the NR data (as the ringdown part) ----------------
   function nrSample(t) {
@@ -233,9 +271,12 @@
     return (1 - w) * Fb + w * Math.min(rr * rr / (ex * ex + ey * ey + 1e-12), 3);
   }
   function softA(q) { if (q <= 0.4) return 1; var u = (q - 0.4) / 1.5; return u > 3.3 ? 0 : Math.exp(-Math.pow(u, 1.5)); }
-  var bbhLayer = document.createElement("canvas");
+  var bbhLayer = document.createElement("canvas"), bbhLast = null;
   function drawBBH(c, t) {
-    var k = fit(c), W = c.width, DS = 3, w = Math.ceil(W / DS), s = nrSample(t), half = c.offsetWidth / 2;
+    var k = fit(c), W = c.width, DS = 3, w = Math.ceil(W / DS), half = c.offsetWidth / 2;
+    if (bbhLast === t + ":" + W) return;
+    bbhLast = t + ":" + W;
+    var s = nrSample(t);
     if (bbhLayer.width !== w) { bbhLayer.width = w; bbhLayer.height = w; }
     var octx = bbhLayer.getContext("2d"), img = octx.createImageData(w, w), p = img.data;
     for (var j = 0; j < w; j++) for (var i = 0; i < w; i++) {
@@ -253,7 +294,7 @@
     ctx.drawImage(bbhLayer, 0, 0, DS * w, DS * w);
   }
 
-  // Source clock: seconds since the BBH appeared -> NR time (loops with a hold).
+  // Source clock: seconds since emission started -> NR time (loops with a hold).
   var PERIOD = (LOOP_T1 - LOOP_T0) / NR_SPEED + LOOP_HOLD;
   function nrTime(sec) { var e = sec % PERIOD; return Math.min(LOOP_T1, LOOP_T0 + NR_SPEED * e); }
   var HL_MAX = Math.max.apply(null, WV.hL.map(Math.abs));
@@ -264,43 +305,58 @@
     return [g * sc * interp(WV.t, L ? WV.hL : WV.h, t), g * sc * interp(WV.t, L ? WV.envL : WV.env, t)];
   }
 
-  // ---------------- drawing the 3D scene ----------------
-  function pathLen(pts) { var L = 0; for (var i = 1; i < pts.length; i++) { var d = sub(pts[i], pts[i - 1]); L += Math.sqrt(dot(d, d)); } return L; }
-  function polyline(ctx, cam, pts) {
+  // ---------------- paths ----------------
+  // A path is a dense polyline with cumulative arc length. Smooth paths are quadratic
+  // Bezier curves from S to E through the point I at their middle.
+  function Path(pts) {
+    var cum = [0];
+    for (var i = 1; i < pts.length; i++) { var d = sub(pts[i], pts[i - 1]); cum.push(cum[i - 1] + Math.sqrt(dot(d, d))); }
+    return { pts: pts, cum: cum, L: cum[cum.length - 1] };
+  }
+  function bezier(S, I, E) {
+    var C = [2 * I[0] - (S[0] + E[0]) / 2, 2 * I[1] - (S[1] + E[1]) / 2, 2 * I[2] - (S[2] + E[2]) / 2], pts = [];
+    for (var n = 0; n <= 400; n++) {
+      var u = n / 400, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u;
+      pts.push([a * S[0] + b * C[0] + c * E[0], a * S[1] + b * C[1] + c * E[1], a * S[2] + b * C[2] + c * E[2]]);
+    }
+    return Path(pts);
+  }
+  // Point and unit tangent at arc length s.
+  function at(path, s) {
+    var cum = path.cum, lo = 0, hi = cum.length - 1;
+    s = clamp(s, 0, path.L);
+    while (hi - lo > 1) { var m = (lo + hi) >> 1; if (cum[m] <= s) lo = m; else hi = m; }
+    var a = path.pts[lo], b = path.pts[hi], d = sub(b, a), l = cum[hi] - cum[lo], f = (s - cum[lo]) / l;
+    return { p: [a[0] + d[0] * f, a[1] + d[1] * f, a[2] + d[2] * f], t: [d[0] / l, d[1] / l, d[2] / l] };
+  }
+  var PATH_UP = bezier(SRC, IMG_UP, EARTH), PATH_DN = bezier(SRC, IMG_DN, EARTH);
+  var PATH_1 = bezier(SRC, planePoint(D.y, 0), EARTH);   // straight
+  var LENS_S = PATH_1.L / 2;
+
+  function strokePath(ctx, cam, path) {
     ctx.beginPath();
-    pts.forEach(function (p, i) { var q = proj(cam, p); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); });
+    for (var s = GAP_SRC, first = true; s <= path.L - GAP_EARTH + 1e-9; s += 0.01, first = false) {
+      var q = proj(cam, at(path, s).p);
+      if (first) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]);
+    }
     ctx.stroke();
   }
-  // Wave along a polyline: displaced in the x-y plane, normal to the path, by AMP h at the
-  // emission time sec - s / v; opacity follows the envelope. lensAt: arc length of the lens
-  // for a switch from unlensed to diffracted (or null).
-  function blendN(n, a, b, u) {
-    var d = sub(b, a), l = Math.sqrt(dot(d, d)), m = [-d[1] / l, d[0] / l, 0];
-    return norm([lerp(n[0], m[0], u), lerp(n[1], m[1], u), 0]);
-  }
-  function drawWave(ctx, cam, pts, sec, travel, lensAt, op) {
-    var Ltot = pathLen(pts), v = Ltot / travel, ds = 0.006, seg = 0, s0 = 0;
-    var prev = null;
+  // Wave along a path: displaced in the x-y plane, normal to the path, by AMP h at the
+  // emission time sec - s / v; opacity follows the envelope. lensS: arc length of the lens,
+  // where the wave switches from unlensed to diffracted (null: never).
+  function drawWave(ctx, cam, path, sec, travel, lensS, op) {
+    var v = path.L / travel, prev = null;
     ctx.lineWidth = 3.5;
     ctx.lineCap = "round";
-    for (var s = 0; s <= Ltot + 1e-9; s += ds) {
-      while (seg < pts.length - 2) {
-        var dd = sub(pts[seg + 1], pts[seg]), l = Math.sqrt(dot(dd, dd));
-        if (s - s0 <= l) break;
-        s0 += l; seg++;
-      }
-      var a = pts[seg], b = pts[seg + 1], d = sub(b, a), ll = Math.sqrt(dot(d, d)), u = (s - s0) / ll;
-      var n = [-d[1] / ll, d[0] / ll, 0], CW = 0.08;
-      if (seg + 2 < pts.length && s0 + ll - s < CW) n = blendN(n, pts[seg + 1], pts[seg + 2], 0.5 * (1 - (s0 + ll - s) / CW));
-      else if (seg > 0 && s - s0 < CW) n = blendN(n, pts[seg - 1], pts[seg], 0.5 * (1 - (s - s0) / CW));
+    for (var s = GAP_SRC; s <= path.L - GAP_EARTH + 1e-9; s += 0.0035) {
+      var a = at(path, s), nl = Math.sqrt(a.t[0] * a.t[0] + a.t[1] * a.t[1]), n = [-a.t[1] / nl, a.t[0] / nl, 0];
       var te = sec - s / v, hv, ev;
-      if (lensAt === null) { var e0 = emit(te, false); hv = e0[0]; ev = e0[1]; }
+      if (lensS === null) { var e0 = emit(te, false); hv = e0[0]; ev = e0[1]; }
       else {
-        var wL = smooth((s - lensAt + 0.06) / 0.12), e1 = emit(te, false), e2 = emit(te, true);
+        var wL = smooth((s - lensS + 0.05) / 0.1), e1 = emit(te, false), e2 = emit(te, true);
         hv = (1 - wL) * e1[0] + wL * e2[0]; ev = (1 - wL) * e1[1] + wL * e2[1];
       }
-      var P3 = [a[0] + d[0] * u + n[0] * AMP * hv, a[1] + d[1] * u + n[1] * AMP * hv, 0];
-      var q = proj(cam, P3);
+      var q = proj(cam, [a.p[0] + n[0] * AMP * hv, a.p[1] + n[1] * AMP * hv, a.p[2]]);
       if (prev) {
         var al = op * clamp(ev / 0.12, 0, 1);
         if (al > 0.01) {
@@ -311,6 +367,8 @@
       prev = q;
     }
   }
+
+  // ---------------- scene objects ----------------
   function drawHalo(ctx, cam, scale, op) {
     if (op <= 0) return;
     var q = proj(cam, LENS), R = HALO_R * scale * PX * q[2];
@@ -319,9 +377,9 @@
     ctx.rotate(-0.25);
     ctx.scale(1, 0.72);
     var g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1.6 * R);
-    for (var i = 0; i <= 10; i++) {
-      var r = i / 10 * 1.6, a = 0.55 * Math.exp(-r * r / 0.5) * op;
-      g.addColorStop(i / 10, "rgba(95,78,140," + a.toFixed(4) + ")");
+    for (var i = 0; i <= 12; i++) {
+      var r = i / 12 * 1.6, a = 0.92 * Math.exp(-r * r / 0.55) * op;
+      g.addColorStop(i / 12, "rgba(55,38,95," + a.toFixed(4) + ")");
     }
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(0, 0, 1.6 * R, 0, 2 * Math.PI); ctx.fill();
@@ -338,24 +396,46 @@
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 2 * Math.PI); ctx.fill();
   }
+  var earthImg = new Image();
+  earthImg.src = "parts/gw-lensing/assets/earth_apollo17_400.png";
   function drawEarth(ctx, cam, op) {
-    if (op <= 0) return;
-    var q = proj(cam, EARTH), r = 55 * q[2];
-    var g = ctx.createRadialGradient(q[0] - 0.35 * r, q[1] - 0.35 * r, 0.1 * r, q[0], q[1], r);
-    g.addColorStop(0, "rgba(170,210,255," + op + ")");
-    g.addColorStop(0.45, "rgba(50,115,210," + op + ")");
-    g.addColorStop(1, "rgba(12,45,110," + op + ")");
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 2 * Math.PI); ctx.fill();
+    if (op <= 0 || !earthImg.complete || !earthImg.naturalWidth) return;
+    var q = proj(cam, EARTH), r = EARTH_R * q[2];
+    ctx.save();
+    ctx.globalAlpha = op;
+    ctx.drawImage(earthImg, q[0] - r, q[1] - r, 2 * r, 2 * r);
+    ctx.restore();
   }
   function drawPlane(ctx, cam, texc, op) {
     if (op <= 0) return;
-    var h = PLANE_H, tl = proj(cam, [0, h, h]), tr = proj(cam, [0, h, -h]), bl = proj(cam, [0, -h, h]);
+    var tl = proj(cam, planePoint(-D.viewHalf, D.viewHalf)), tr = proj(cam, planePoint(D.viewHalf, D.viewHalf)),
+        bl = proj(cam, planePoint(-D.viewHalf, -D.viewHalf));
     ctx.save();
     ctx.globalAlpha = op;
     ctx.transform((tr[0] - tl[0]) / TEX, (tr[1] - tl[1]) / TEX, (bl[0] - tl[0]) / TEX, (bl[1] - tl[1]) / TEX, tl[0], tl[1]);
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(texc, 0, 0);
+    ctx.restore();
+  }
+  function drawColorbar(ctx, cx, op) {
+    if (op <= 0) return;
+    var x0 = cx - CB.w / 2, y0 = CB.y;
+    ctx.save();
+    ctx.globalAlpha = op;
+    var g = ctx.createLinearGradient(x0, 0, x0 + CB.w, 0);
+    for (var i = 0; i < VIRIDIS.length; i++) g.addColorStop(i / (VIRIDIS.length - 1), rgba(VIRIDIS[i], 1));
+    ctx.fillStyle = g;
+    ctx.fillRect(x0, y0, CB.w, CB.h);
+    ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
+    ctx.strokeRect(x0, y0, CB.w, CB.h);
+    ctx.fillStyle = "#000"; ctx.font = "28px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    [0, 0.2, 0.4, 0.6, 0.8].forEach(function (t) {
+      var x = x0 + t / TAU_END * CB.w;
+      ctx.beginPath(); ctx.moveTo(x, y0 + CB.h); ctx.lineTo(x, y0 + CB.h + 8); ctx.stroke();
+      ctx.fillText(t === 0 ? "0" : t.toFixed(1), x, y0 + CB.h + 10);
+    });
+    ctx.font = "32px Arial"; ctx.textBaseline = "bottom";
+    ctx.fillText("Time delay", cx, y0 - 8);
     ctx.restore();
   }
 
@@ -372,9 +452,10 @@
   })();
 
   // ---------------- plots ----------------
-  function plotAxes(ctx, box, xr, yr, xt, yt, logx, xfmt, op) {
+  function plotAxes(ctx, box, xr, yr, xt, yt, logx, op) {
     if (op <= 0) return null;
-    function X(x) { return box[0] + ((logx ? Math.log10(x) : x) - (logx ? Math.log10(xr[0]) : xr[0])) / ((logx ? Math.log10(xr[1]) : xr[1]) - (logx ? Math.log10(xr[0]) : xr[0])) * (box[2] - box[0]); }
+    var f = logx ? Math.log10 : function (x) { return x; };
+    function X(x) { return box[0] + (f(x) - f(xr[0])) / (f(xr[1]) - f(xr[0])) * (box[2] - box[0]); }
     function Y(y) { return box[3] - (y - yr[0]) / (yr[1] - yr[0]) * (box[3] - box[1]); }
     ctx.save();
     ctx.globalAlpha = op;
@@ -385,7 +466,7 @@
     xt.forEach(function (x) {
       var px = X(x);
       ctx.beginPath(); ctx.moveTo(px, box[3]); ctx.lineTo(px, box[3] - 12); ctx.stroke();
-      ctx.fillText(xfmt(x), px, box[3] + 10);
+      ctx.fillText(logx || x !== 0 ? String(x) : "0", px, box[3] + 10);
     });
     ctx.textAlign = "right"; ctx.textBaseline = "middle";
     yt.forEach(function (y) {
@@ -396,6 +477,7 @@
     ctx.restore();
     return { X: X, Y: Y };
   }
+  // Curve through (xs, ys) for xs <= xmax, clipped to the box.
   function curve(ctx, m, box, xs, ys, xmax, color, width, op) {
     if (!m || op <= 0) return;
     ctx.save();
@@ -408,177 +490,143 @@
     ctx.stroke();
     ctx.restore();
   }
-  function fmtTau(x) { return x === 0 ? "0" : x.toFixed(1); }
-  function fmtW(x) { return x >= 1 ? String(x) : String(x); }
-  var TAU_TICKS = [0, 0.2, 0.4, 0.6, 0.8], W_TICKS = [0.01, 0.1, 1, 10, 100];
+  var TAU_TICKS = [0, 0.2, 0.4, 0.6, 0.8], W_TICKS = [0.01, 0.1, 1, 10, 100, 1000];
 
-  // =================== slide 1 ===================
-  (function () {
-    var scene, bbh, run, labels, citeWave, citePlot, clock = null;
-    var p = {};
-    ["light", "bbh", "emRays", "halo", "wave2", "wave1", "plane", "rays", "rayColor", "scene", "cam",
-     "contour", "frame", "tau", "band", "layout", "fprog"].forEach(function (k) { p[k] = P(0); });
-    p.halo = P(1); p.light = P(1); p.emRays = P(1); p.scene = P(1);
+  // =================== the slide ===================
+  var scene, bbh, run, labels, citePlot, clock = null, freezeT = null;
+  var p = {};
+  ["light", "bbh", "emRays", "halo", "wave2", "wave1", "plane", "rays", "rayColor", "cbar", "scene", "cam",
+   "contour", "marks", "frame", "tau", "band", "layout", "fprog"].forEach(function (k) { p[k] = P(0); });
+  p.halo = P(1); p.light = P(1); p.emRays = P(1); p.scene = P(1);
 
-    function frame(now) {
-      var k = fit(scene), ctx = scene.getContext("2d");
-      ctx.setTransform(k, 0, 0, k, 0, 0);
-      ctx.clearRect(0, 0, 1920, 1080);
-      var v = {};
-      for (var key in p) v[key] = val(p[key], now);
-      var cam = camera(v.cam), sec = clock === null ? -1 : (now - clock) / 1000;
+  function srcTime(now) {
+    if (freezeT !== null) return freezeT;
+    return clock === null ? LOOP_T0 : nrTime((now - clock) / 1000);
+  }
 
-      drawHalo(ctx, cam, v.halo, lerp(1, 0.5, v.cam));
-      drawPlane(ctx, cam, drawTexture(v.tau, v.band, v.contour), v.plane);
+  function frame(now) {
+    var k = fit(scene), ctx = scene.getContext("2d");
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.clearRect(0, 0, 1920, 1080);
+    var v = {};
+    for (var key in p) v[key] = val(p[key], now);
+    var cam = camera(v.cam), sec = clock === null ? -1 : (now - clock) / 1000;
 
-      // ray-optics paths
-      if (v.emRays > 0) {
-        ctx.lineWidth = 3; ctx.strokeStyle = "rgba(235,140,20," + v.emRays + ")";
-        polyline(ctx, cam, [SRC, IMG_UP, EARTH]);
-        polyline(ctx, cam, [SRC, IMG_DN, EARTH]);
-      }
-      // many rays through the lens plane
-      if (v.rays > 0) {
-        ctx.lineWidth = 1.6;
-        RAYS.forEach(function (r) {
-          var c = [lerp(150, r.c[0], v.rayColor), lerp(150, r.c[1], v.rayColor), lerp(150, r.c[2], v.rayColor)];
-          ctx.strokeStyle = rgba(c, 0.6 * v.rays);
-          polyline(ctx, cam, [SRC, planePoint(r.x1, r.x2), EARTH]);
-        });
-      }
-      // gravitational waves
-      if (v.wave2 > 0 && sec >= 0) {
-        drawWave(ctx, cam, [SRC, IMG_UP, EARTH], sec, TRAVEL, null, v.wave2);
-        drawWave(ctx, cam, [SRC, IMG_DN, EARTH], sec, TRAVEL + DELAY, null, v.wave2);
-      }
-      if (v.wave1 > 0 && sec >= 0) {
-        var mid = planePoint(D.y, 0);
-        drawWave(ctx, cam, [SRC, mid, EARTH], sec, TRAVEL, pathLen([SRC, mid]), v.wave1);
-      }
-      drawLight(ctx, cam, v.light * v.scene);
-      drawEarth(ctx, cam, v.scene);
+    drawHalo(ctx, cam, v.halo, lerp(1, 0.35, v.cam));
+    drawPlane(ctx, cam, drawTexture(v.tau, v.band, v.contour, v.marks), v.plane);
 
-      // BBH at the source
-      bbh.style.opacity = v.bbh * v.scene;
-      if (v.bbh * v.scene > 0.001) drawBBH(bbh, sec >= 0 ? nrTime(sec) : LOOP_T0);
-
-      // plots
-      var ib = [0, 1, 2, 3].map(function (i) { return lerp(I_BOX0[i], I_BOX1[i], v.layout); });
-      var mI = plotAxes(ctx, ib, [0, TAU_END], I_Y, TAU_TICKS, [0, 2, 4, 6, 8], false, fmtTau, v.frame);
-      if (mI && v.band > 0) {
-        var shownTo = v.tau - DT / 2;
-        if (p.tau.to > 3 * DT + 1e-9 || v.tau > 3 * DT + 1e-6) curve(ctx, mI, ib, D.tau, D.I, shownTo, "#000", 3, v.band);
-        ctx.save(); ctx.globalAlpha = v.band;
-        for (var i = 0; i < D.bandMid.length; i++) {
-          if (D.bandMid[i] > shownTo + 1e-6) break;
-          ctx.fillStyle = "rgb(205,55,40)"; ctx.strokeStyle = "#000"; ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.arc(mI.X(D.bandMid[i]), mI.Y(D.bandI[i]), 8, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
-        }
-        ctx.restore();
-      }
-      var mF = plotAxes(ctx, F_BOX, [0.01, 100], F_Y, W_TICKS, [0, 2, 4, 6], true, fmtW, v.layout);
-      if (mF) curve(ctx, mF, F_BOX, D.w, D.absF, 0.01 * Math.pow(1e4, v.fprog), "#000", 3, 1);
-
-      // labels
-      place(labels.it_x, (ib[0] + ib[2]) / 2, ib[3] + 75, v.frame);
-      place(labels.it_y, ib[0] - 80, (ib[1] + ib[3]) / 2, v.frame);
-      place(labels.f_x, (F_BOX[0] + F_BOX[2]) / 2, F_BOX[3] + 75, v.layout);
-      place(labels.f_y, F_BOX[0] - 80, (F_BOX[1] + F_BOX[3]) / 2, v.layout);
-      citeWave.style.opacity = v.wave1;
-      citePlot.style.opacity = v.frame;
+    // smooth ray-optics paths
+    if (v.emRays > 0) {
+      ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.strokeStyle = "rgba(235,140,20," + v.emRays + ")";
+      strokePath(ctx, cam, PATH_UP);
+      strokePath(ctx, cam, PATH_DN);
     }
+    // many rays through the lens plane (thin lens: straight segments)
+    if (v.rays > 0) {
+      ctx.lineWidth = 1.6;
+      RAYS.forEach(function (r) {
+        var c = [lerp(150, r.c[0], v.rayColor), lerp(150, r.c[1], v.rayColor), lerp(150, r.c[2], v.rayColor)];
+        ctx.strokeStyle = rgba(c, 0.6 * v.rays);
+        ctx.beginPath();
+        [SRC, planePoint(r.x1, r.x2), EARTH].forEach(function (pt, i) { var q = proj(cam, pt); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); });
+        ctx.stroke();
+      });
+    }
+    // gravitational waves
+    if (v.wave2 > 0 && sec >= 0) {
+      drawWave(ctx, cam, PATH_UP, sec, TRAVEL, null, v.wave2);
+      drawWave(ctx, cam, PATH_DN, sec, TRAVEL + DELAY, null, v.wave2);
+    }
+    if (v.wave1 > 0 && sec >= 0) {
+      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(235,140,20," + 0.22 * v.wave1 + ")";
+      strokePath(ctx, cam, PATH_1);
+      drawWave(ctx, cam, PATH_1, sec, TRAVEL, LENS_S, v.wave1);
+    }
+    drawLight(ctx, cam, v.light * v.scene);
+    drawEarth(ctx, cam, v.scene);
+    drawColorbar(ctx, lerp(960, PLANE_CX, v.cam), v.cbar);
 
-    Deck.widget("gw-lensing-main", {
-      steps: 13,
-      enter: function (slide) {
-        scene = slide.querySelector("#gw-lensing-scene");
-        bbh = slide.querySelector("#gw-lensing-bbh");
-        citeWave = slide.querySelector("#gw-lensing-cite-wave");
-        citePlot = slide.querySelector("#gw-lensing-cite-plot");
-        var q = proj(camera(0), SRC);
-        bbh.style.left = (q[0] - 130) + "px"; bbh.style.top = (q[1] - 130) + "px";
-        var l = proj(camera(0), LENS);
-        citeWave.style.left = l[0] + "px"; citeWave.style.top = (l[1] + 150) + "px";
-        citePlot.style.left = PLANE_CX + "px"; citePlot.style.top = "985px";
-        if (!labels) {
-          var box = slide.querySelector("#gw-lensing-labels");
-          labels = {
-            it_x: makeLabel(box, "Time"), it_y: makeLabel(box, "~Area", true),
-            f_x: makeLabel(box, "$w"), f_y: makeLabel(box, "$\\lvert F(w)\\rvert", true)
-          };
-        }
-        run = Runner(frame);
-        run.start();
-      },
-      leave: function () { run.stop(); },
-      step: function (slide, k, dir) {
-        var now = performance.now(), inst = dir < 0;
-        if (k >= 1 && (clock === null || inst)) clock = inst ? now - 20000 : now;
-        if (k === 0) clock = null;
-        set(p.light, k === 0 ? 1 : 0, now, inst, 900);
-        set(p.bbh, k >= 1 && k <= 4 ? 1 : 0, now, inst, 900);
-        set(p.emRays, k === 0 ? 1 : k === 1 ? 0.22 : 0, now, inst, 900);
-        set(p.halo, k <= 1 ? 1 : HALO_SMALL, now, inst, 2000);
-        set(p.wave2, k === 1 ? 1 : 0, now, inst, 900);
-        set(p.wave1, k === 2 ? 1 : 0, now, inst, 1200);
-        set(p.plane, k >= 3 ? 1 : 0, now, inst, 900);
-        set(p.rays, k === 3 || k === 4 ? 1 : 0, now, inst, 900);
-        set(p.rayColor, k >= 4 ? 1 : 0, now, inst, 1200);
-        set(p.scene, k <= 4 ? 1 : 0, now, inst, 900);
-        set(p.cam, k >= 5 ? 1 : 0, now, inst, 2200);
-        set(p.contour, k >= 5 ? 1 : 0, now, inst, 1200);
-        set(p.frame, k >= 6 ? 1 : 0, now, inst, 700);
-        set(p.band, k >= 7 ? 1 : 0, now, inst, 300);
-        var tau = k < 7 ? 0 : k <= 9 ? (k - 6) * DT : k === 10 ? TAU_S : k === 11 ? TAU_M : TAU_END;
-        if (k <= 9) set(p.tau, tau, now, true);
-        else set(p.tau, tau, now, inst, k === 10 ? 2000 : k === 11 ? 2500 : 6000, true);
-        set(p.layout, k >= 13 ? 1 : 0, now, inst, 1200);
-        set(p.fprog, k >= 13 ? 1 : 0, now, inst, 2000, true);
-        if (k >= 13 && !inst) { p.fprog.t0 = now + 1000; }
+    // BBH at the source
+    bbh.style.opacity = v.bbh * v.scene;
+    if (v.bbh * v.scene > 0.001) drawBBH(bbh, srcTime(now));
+
+    // plots
+    var ib = [0, 1, 2, 3].map(function (i) { return lerp(I_BOX0[i], I_BOX1[i], v.layout); });
+    var mI = plotAxes(ctx, ib, [0, TAU_END], I_Y, TAU_TICKS, [0, 2, 4, 6, 8], false, v.frame);
+    if (mI && v.band > 0) {
+      // the GLoW curve once the band moves continuously (stage 11 on), up to the band's outer edge
+      if (p.tau.to > 3 * DT + 1e-9) curve(ctx, mI, ib, D.tau, D.I, v.tau, "#000", 3, v.band);
+      ctx.save(); ctx.globalAlpha = v.band;
+      ctx.fillStyle = "rgb(205,55,40)"; ctx.strokeStyle = "#000"; ctx.lineWidth = 1.5;
+      for (var i = 0; i < D.bandMid.length; i++) {
+        if (D.bandMid[i] + DT / 2 > v.tau + 1e-6) break;
+        ctx.beginPath(); ctx.arc(mI.X(D.bandMid[i]), mI.Y(D.bandI[i]), 8, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
       }
-    });
-  })();
+      ctx.restore();
+    }
+    var mF = plotAxes(ctx, F_BOX, [0.01, 1000], F_Y, W_TICKS, [0, 2, 4, 6], true, v.layout);
+    if (mF) curve(ctx, mF, F_BOX, D.w, D.absF, 0.01 * Math.pow(1e5, v.fprog), "#000", 2, 1);
 
-  // =================== slide 2: source position loops ===================
-  (function () {
-    var cv, run, labels, t0 = 0;
-    var BOX_I = [170, 170, 900, 860], BOX_F = [1090, 170, 1820, 860];
-    var Y_LO = 0.08, Y_HI = D.sweepY[D.sweepY.length - 1], LOOP = 14;   // s per back-and-forth
-    function row(arrs, y) {
-      var ys = D.sweepY, i = 0;
-      while (i < ys.length - 2 && ys[i + 1] < y) i++;
-      var f = clamp((y - ys[i]) / (ys[i + 1] - ys[i]), 0, 1);
-      return arrs[i].map(function (a, j) { return a * (1 - f) + arrs[i + 1][j] * f; });
+    // labels
+    place(labels.it_x, (ib[0] + ib[2]) / 2, ib[3] + 70, v.frame);
+    place(labels.it_y, ib[0] - 80, (ib[1] + ib[3]) / 2, v.frame);
+    place(labels.f_x, (F_BOX[0] + F_BOX[2]) / 2, F_BOX[3] + 70, v.layout);
+    place(labels.f_y, F_BOX[0] - 80, (F_BOX[1] + F_BOX[3]) / 2, v.layout);
+    citePlot.style.opacity = v.frame;
+  }
+
+  Deck.widget("gw-lensing-main", {
+    steps: 14,
+    enter: function (slide) {
+      scene = slide.querySelector("#gw-lensing-scene");
+      bbh = slide.querySelector("#gw-lensing-bbh");
+      citePlot = slide.querySelector("#gw-lensing-cite-plot");
+      var q = proj(camera(0), SRC);
+      bbh.style.left = (q[0] - 130) + "px"; bbh.style.top = (q[1] - 130) + "px";
+      citePlot.style.left = ((I_BOX0[0] + I_BOX0[2]) / 2) + "px"; citePlot.style.top = "1010px";
+      if (!labels) {
+        var box = slide.querySelector("#gw-lensing-labels");
+        labels = {
+          it_x: makeLabel(box, "Time"), it_y: makeLabel(box, "~Area", true),
+          f_x: makeLabel(box, "$w"), f_y: makeLabel(box, "$\\lvert F(w)\\rvert", true)
+        };
+      }
+      run = Runner(frame);
+      run.start();
+    },
+    leave: function () { run.stop(); },
+    step: function (slide, k, dir) {
+      var now = performance.now(), inst = dir < 0;
+      // source clock: waves start from the source on entering stages 1 and 3; the BBH
+      // stops in stage 2
+      if (k === 0) { clock = null; freezeT = null; }
+      else if (k === 2) { freezeT = inst ? LOOP_T0 : srcTime(now); }
+      else {
+        freezeT = null;
+        if (inst) clock = now - 20000;
+        else if (k === 1 || k === 3 || clock === null) clock = now;
+      }
+      set(p.light, k === 0 ? 1 : 0, now, inst, 900);
+      set(p.bbh, k >= 1 && k <= 5 ? 1 : 0, now, inst, 900);
+      set(p.emRays, k === 0 ? 1 : k === 1 ? 0.22 : 0, now, inst, 900);
+      set(p.halo, k <= 1 ? 1 : HALO_SMALL, now, inst, 2000, false, k === 2 ? 900 : 0);
+      set(p.wave2, k === 1 ? 1 : 0, now, inst, 800);
+      set(p.wave1, k === 3 ? 1 : 0, now, inst, 800);
+      set(p.plane, k >= 4 ? 1 : 0, now, inst, 900);
+      set(p.rays, k === 4 || k === 5 ? 1 : 0, now, inst, 900);
+      set(p.rayColor, k >= 5 ? 1 : 0, now, inst, 1200);
+      set(p.cbar, k >= 5 ? 1 : 0, now, inst, 900);
+      set(p.scene, k <= 5 ? 1 : 0, now, inst, 900);
+      set(p.cam, k >= 6 ? 1 : 0, now, inst, 2200);
+      set(p.contour, k >= 6 ? 1 : 0, now, inst, 1200);
+      set(p.marks, k >= 6 ? 1 : 0, now, inst, 600, false, k === 6 ? 2000 : 0);
+      set(p.frame, k >= 7 ? 1 : 0, now, inst, 700);
+      set(p.band, k >= 8 ? 1 : 0, now, inst, 300);
+      var tau = k < 8 ? 0 : k <= 10 ? (k - 7) * DT : k === 11 ? TAU_S : k === 12 ? TAU_M : TAU_END;
+      if (k <= 10) set(p.tau, tau, now, true);
+      else set(p.tau, tau, now, inst, k === 11 ? 2000 : k === 12 ? 2500 : 6000, true);
+      set(p.layout, k >= 14 ? 1 : 0, now, inst, 1200);
+      set(p.fprog, k >= 14 ? 1 : 0, now, inst, 2500, true, k === 14 ? 1000 : 0);
     }
-    function frame(now) {
-      var k = fit(cv), ctx = cv.getContext("2d");
-      ctx.setTransform(k, 0, 0, k, 0, 0);
-      ctx.clearRect(0, 0, 1920, 1080);
-      var ph = ((now - t0) / 1000) / LOOP, y = Y_LO + (Y_HI - Y_LO) * (0.5 - 0.5 * Math.cos(2 * Math.PI * ph));
-      var mI = plotAxes(ctx, BOX_I, [0, TAU_END], I_Y, TAU_TICKS, [0, 2, 4, 6, 8], false, fmtTau, 1);
-      curve(ctx, mI, BOX_I, D.tau, row(D.sweepI, y), 1e9, "#000", 3, 1);
-      var mF = plotAxes(ctx, BOX_F, [0.01, 100], F_Y, W_TICKS, [0, 2, 4, 6], true, fmtW, 1);
-      curve(ctx, mF, BOX_F, D.w, row(D.sweepF, y), 1e9, "#000", 3, 1);
-    }
-    Deck.widget("gw-lensing-vary", {
-      steps: 0,
-      enter: function (slide) {
-        cv = slide.querySelector("#gw-lensing-vary-canvas");
-        if (!labels) {
-          var box = slide.querySelector("#gw-lensing-vary-labels");
-          labels = [makeLabel(box, "Time"), makeLabel(box, "~Area", true),
-                    makeLabel(box, "$w"), makeLabel(box, "$\\lvert F(w)\\rvert", true)];
-          place(labels[0], (BOX_I[0] + BOX_I[2]) / 2, BOX_I[3] + 75, 1);
-          place(labels[1], BOX_I[0] - 80, (BOX_I[1] + BOX_I[3]) / 2, 1);
-          place(labels[2], (BOX_F[0] + BOX_F[2]) / 2, BOX_F[3] + 75, 1);
-          place(labels[3], BOX_F[0] - 80, (BOX_F[1] + BOX_F[3]) / 2, 1);
-        }
-        t0 = performance.now();
-        run = Runner(frame);
-        run.start();
-      },
-      leave: function () { run.stop(); },
-      step: function () {}
-    });
-  })();
+  });
 })();
