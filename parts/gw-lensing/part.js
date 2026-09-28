@@ -4,7 +4,8 @@
 //   0  large dark diffuse halo, a light source on the left, Earth on the right, two smooth rays
 //   1  the source becomes a merging BBH (NR data of the ringdown part); gravitational
 //      waves travel along the same two paths; the lower one arrives later (schematic lag)
-//   2  waves and paths fade, the BBH stops; then the halo shrinks
+//   2  waves and paths fade, the BBH stops; then the halo shrinks and the label
+//      M_Lz <~ 1e4 M_sun appears below it (stages 2-3)
 //   3  one path; the BBH runs again; the wave changes from unlensed to diffracted at the
 //      halo (h_L = IFFT[F(w) h(f)], F from GLoW for a cored isothermal sphere)
 //   4  lens plane with many rays source -> plane -> Earth (thin lens: straight segments);
@@ -516,7 +517,7 @@
   var scene, bbh, run, labels, citePlot, clock = null, freezeT = null;
   var p = {};
   ["light", "bbh", "emRays", "halo", "wave2", "wave1", "plane", "rays", "rayColor", "cbar", "scene", "cam",
-   "contour", "marks", "frame", "tau", "band", "layout", "fprog"].forEach(function (k) { p[k] = P(0); });
+   "contour", "marks", "mass", "frame", "tau", "band", "layout", "fprog"].forEach(function (k) { p[k] = P(0); });
   p.halo = P(1); p.light = P(1); p.emRays = P(1); p.scene = P(1);
 
   function srcTime(now) {
@@ -591,6 +592,8 @@
     place(labels.it_x, (ib[0] + ib[2]) / 2, ib[3] + 70, v.frame);
     place(labels.it_y, ib[0] - 90, (ib[1] + ib[3]) / 2, v.frame);
     place(labels.cb, lerp(960, PLANE_CX, v.cam), CB.y + CB.h + 60, v.cbar);
+    var qL = proj(cam, LENS);
+    place(labels.mass, qL[0], qL[1] + 100, v.mass);
     place(labels.f_x, (F_BOX[0] + F_BOX[2]) / 2, F_BOX[3] + 70, v.layout);
     place(labels.f_y, F_BOX[0] - 80, (F_BOX[1] + F_BOX[3]) / 2, v.layout);
     citePlot.style.opacity = v.frame;
@@ -609,7 +612,7 @@
         var box = slide.querySelector("#gw-lensing-labels");
         labels = {
           it_x: makeLabel(box, "$T"), it_y: makeLabel(box, "$\\frac{1}{2\\pi}\\frac{\\mathrm{d}A}{\\mathrm{d}T}", true),
-          cb: makeLabel(box, "$T"),
+          cb: makeLabel(box, "$T"), mass: makeLabel(box, "$M_{Lz} \\lesssim 10^4\\,M_\\odot"),
           f_x: makeLabel(box, "$w"), f_y: makeLabel(box, "$\\lvert F(w)\\rvert", true)
         };
       }
@@ -632,6 +635,8 @@
       set(p.bbh, k >= 1 && k <= 5 ? 1 : 0, now, inst, 900);
       set(p.emRays, k === 0 ? 1 : k === 1 ? 0.22 : 0, now, inst, 900);
       set(p.halo, k <= 1 ? 1 : HALO_SMALL, now, inst, 2000, false, k === 2 ? 900 : 0);
+      // the mass label fades in as the shrink ends and goes when the lens plane appears
+      set(p.mass, k === 2 || k === 3 ? 1 : 0, now, inst, 600, false, k === 2 ? 2600 : 0);
       set(p.wave2, k === 1 ? 1 : 0, now, inst, 800);
       set(p.wave1, k === 3 ? 1 : 0, now, inst, 800);
       set(p.plane, k >= 4 ? 1 : 0, now, inst, 900);
