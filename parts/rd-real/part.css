@@ -8,11 +8,6 @@
   font-size: 96px;
 }
 
-/* Citations at body-text size (user, 2026-09-27). */
-.rd-real-fig .cite {
-  font-size: 40px;
-}
-
 .rd-real-fig {
   position: absolute;
   margin: 0;
@@ -136,7 +131,7 @@
   white-space: nowrap;
 }
 
-/* GWTC-5 pSEOBNR event count (paper macro \Nevents = 31). */
+/* GWTC-5 ringdown-pipeline event count: 6 O4b events with RD marked in the paper's O4b event-selection table. */
 .rd-real-count {
   position: absolute;
   left: 0;
