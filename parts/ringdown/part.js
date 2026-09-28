@@ -7,8 +7,8 @@
 //   pause. Stage 2: ringdown at half the stage-1 speed.
 // ringdown-quad: the quadrupole picture. Left, a shorter inspiral, frozen at merger. Right,
 //   at the same scale and height, "~ a symmetric l = m = 2 blob"; the left view fades while
-//   the blob zooms; horizon; ringdown; light ring; EHT image; complex plane with the 220
-//   and 221 frequencies.
+//   the blob zooms; horizon; ringdown; light ring; EHT image; a decaying 220 waveform; below
+//   it, the complex plane with the 220 and 221 frequencies.
 // ringdown-sum: the full ringdown = 22 + 33 + 44 + ..., frozen at merger until a step
 //   starts the ringdown; then the complex plane.
 //
@@ -320,6 +320,50 @@
       p.stroke();
     });
   }
+  // Waveform panel, in the same style: Re of A e^{-i omega t} for one QNM (A = 1, t from 0,
+  // in units of M_f), labelled h = A e^{-i omega t}. Drawn once; fills the box element.
+  function Wave(box, mode, tmax, xticks) {
+    var c = document.createElement("canvas");
+    box.appendChild(c);
+    var W = box.offsetWidth, Hh = box.offsetHeight, L0 = 110, R1 = W - 20, T0 = 10, B0 = Hh - 60;
+    var w = QNM[mode], yr = [-1.15, 1.15];
+    function X(t) { return L0 + t / tmax * (R1 - L0); }
+    function Y(y) { return B0 - (y - yr[0]) / (yr[1] - yr[0]) * (B0 - T0); }
+    function label(tex, x, y, cls) {
+      var d = document.createElement("div");
+      d.className = cls;
+      d.style.left = x + "px"; d.style.top = y + "px";
+      katex.render(tex, d);
+      box.appendChild(d);
+    }
+    label("t / M_f", (L0 + R1) / 2, Hh + 45, "ringdown-plane-label");
+    label("h", 45, (T0 + B0) / 2, "ringdown-plane-label");
+    label("h = A\\, e^{-i\\omega t}", R1 - 40, T0 + 55, "ringdown-plane-label ringdown-wave-eq");
+    return {
+      draw: function () {
+        var k = fit(c), ctx = c.getContext("2d");
+        ctx.setTransform(k, 0, 0, k, 0, 0);
+        ctx.clearRect(0, 0, W, Hh);
+        ctx.strokeStyle = "#000"; ctx.fillStyle = "#000"; ctx.lineWidth = 2;
+        ctx.strokeRect(L0, T0, R1 - L0, B0 - T0);
+        ctx.font = "30px Arial";
+        ctx.textAlign = "center"; ctx.textBaseline = "top";
+        xticks.forEach(function (x) {
+          ctx.beginPath(); ctx.moveTo(X(x), B0); ctx.lineTo(X(x), B0 - 12); ctx.stroke();
+          ctx.fillText(String(x), X(x), B0 + 10);
+        });
+        ctx.save();
+        ctx.beginPath(); ctx.rect(L0, T0, R1 - L0, B0 - T0); ctx.clip();
+        ctx.lineWidth = 4; ctx.beginPath();
+        for (var i = 0; i <= 600; i++) {
+          var t = tmax * i / 600, y = Math.exp(w[1] * t) * Math.cos(w[0] * t);
+          if (i === 0) ctx.moveTo(X(t), Y(y)); else ctx.lineTo(X(t), Y(y));
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+    };
+  }
   function range(a, b, d) { var r = []; for (var x = a; x <= b + 1e-9; x += d) r.push(+x.toFixed(6)); return r; }
 
   // One requestAnimationFrame loop per slide, running while the slide is shown.
@@ -377,9 +421,10 @@
   // Stages: 0 binary; 1 inspiral to merger (left, frozen after); 2 "~", symmetric 22 blob and
   // "lm = 22" on the right; 3 left view and "~" fade, zoom; 4 horizon; 5 ringdown (once); 6 back to merger;
   // 7 light ring; 8 ringdown, looping from here on; 9 EHT image in place of the left view;
-  // 10 complex plane with 220; 11 221 added.
+  // 10 EHT gone, waveform of the 220 QNM on the left; 11 complex plane with 220 below it;
+  // 12 221 added.
   (function () {
-    var view, rc, lm, approx, eht, planeBox, plane = null, run, leftCanvas;
+    var view, rc, lm, approx, eht, planeBox, plane = null, waveBox, wave = null, run, leftCanvas;
     var left = still(T_START_Q), right = still(D.tCommon);
     var par = { blob: P(0), zoom: P(1), hor: P(0), lr: P(0) };
 
@@ -391,7 +436,7 @@
     }
 
     Deck.widget("ringdown-quad", {
-      steps: 11,
+      steps: 12,
       enter: function (slide) {
         leftCanvas = slide.querySelector("#ringdown-quad-left");
         view = SoftMergerView(leftCanvas, 900 / (2 * L), 0, 0, 470);
@@ -400,10 +445,13 @@
         approx = slide.querySelector("#ringdown-quad-approx");
         eht = slide.querySelector("#ringdown-eht");
         planeBox = slide.querySelector("#ringdown-quad-plane");
+        waveBox = slide.querySelector("#ringdown-quad-wave");
         if (!plane) plane = Plane(planeBox, [0.38, 0.8], [0.04, 0.36], range(0.4, 0.8, 0.1), range(0.05, 0.35, 0.05), ["220", "221"]);
+        if (!wave) wave = Wave(waveBox, "220", 40, range(0, 40, 10));
         run = Runner(function (now) {
           view.draw(tAt(left, now));
           drawRight(now);
+          wave.draw();
           plane.draw();
         });
         run.start();
@@ -428,8 +476,9 @@
         else right = still(D.tCommon);
         fade(lm, k >= 2, inst);
         fade(eht, k === 9, inst);
-        fade(planeBox, k >= 10, inst);
-        plane.shown = { "220": k >= 10, "221": k >= 11 };
+        fade(waveBox, k >= 10, inst);
+        fade(planeBox, k >= 11, inst);
+        plane.shown = { "220": k >= 11, "221": k >= 12 };
       }
     });
   })();

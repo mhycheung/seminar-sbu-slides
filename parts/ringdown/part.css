@@ -23,9 +23,11 @@
   width: 700px;
 }
 .ringdown-eht-img { display: block; width: 700px; height: 700px; }
-.ringdown-cite { margin-top: 12px; text-align: center; }
+/* One line, centred under the image; wider than the image, so it overflows both sides. */
+.ringdown-cite { margin-top: 12px; display: flex; justify-content: center; gap: 40px; white-space: nowrap; }
 .ringdown-plane-box { position: absolute; }
-.ringdown-quad-plane { left: 140px; top: 150px; width: 760px; height: 740px; }
+.ringdown-quad-wave { left: 140px; top: 40px; width: 760px; height: 320px; }
+.ringdown-quad-plane { left: 140px; top: 450px; width: 760px; height: 520px; }
 .ringdown-sum-plane { left: 360px; top: 490px; width: 1240px; height: 440px; }
 .ringdown-plane-box canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
 .ringdown-plane-label {
@@ -34,7 +36,9 @@
   transform: translate(-50%, -50%);
   white-space: nowrap;
 }
+.ringdown-wave-eq { transform: translate(-100%, -50%); }
 .ringdown-plane-ylabel { transform: translate(-50%, -50%) rotate(-90deg); }
+.ringdown-plane-cite { position: absolute; left: 50%; top: 520px; transform: translateX(-50%); white-space: nowrap; }
 .ringdown-plane-q { position: absolute; font-size: 36px; white-space: nowrap; }
 .ringdown-sum-full { position: absolute; left: 0; top: 0; width: 520px; height: 520px; }
 .ringdown-mode { position: absolute; top: -40px; width: 600px; height: 600px; }
