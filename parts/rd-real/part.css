@@ -9,6 +9,15 @@
   width: 100%;
 }
 
+.rd-real-collab {
+  position: absolute;
+  top: 130px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #008000;
+}
+
 .rd-real-bullets {
   position: absolute;
   left: 260px;
