@@ -12,7 +12,7 @@
   // and the prior odds appear as a factor.
   document.querySelectorAll(".gw231123-lensing-bayes").forEach(function (sl) {
     Deck.widget(sl.id, {
-      steps: 1,
+      steps: 2,
       enter: function () {},
       leave: function () {},
       step: function (s, k) { sl.classList.toggle("gw231123-lensing-odds", k >= 1); }
@@ -26,10 +26,15 @@
   var XLIM = [-150, 100];
   var YLIM = D.ylim || { L1: [-5.5, 4.5], H1: [-4.5, 5.5] };                        // Fig. 3
   var PANEL = { L: 250, R: 1830 };
-  var ROWS = { T: 60, B: 520 };            // upper half, where the components are stacked
+  var ROWS = { T: 140, B: 540 };           // upper half, below the title: the stacked components
   var LOW = { T: 590, B: 960 };            // Livingston panel
   var HIGH = { T: 95, B: 465 };            // Hanford panel (stage 8)
   var MERGE_MS = 1600;
+  // Title of slide 2 at each stage: the model on screen (none at stage 0 and at the end, stage 8).
+  var TITLES = ["", "Unlensed", "Point mass lens (PM)", "Point mass lens (PM)",
+    "Generalized singular isothermal sphere (gSIS)", "Generalized singular isothermal sphere (gSIS)",
+    "Cored isothermal sphere (CIS)", "Cored isothermal sphere (CIS)", ""];
+  var COMP_LABEL = { I: "image I", II: "image II", III: "image III", diff: "diffraction" };
   var TICK_FONT = "30px Arial";
 
   function colorsFor(m) {
@@ -121,15 +126,14 @@
   }
 
   function legend(ctx) {
-    var x = PANEL.L + 22, y = HIGH.T + 18, w = 560, h = 64;
+    var x = PANEL.L + 22, y = HIGH.T + 18, w = 450, h = 64;
     ctx.save();
     ctx.fillStyle = "rgba(255,255,255,0.92)"; ctx.strokeStyle = "#bbb"; ctx.lineWidth = 1.5;
     ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
-    ctx.font = "30px Arial"; ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.fillStyle = "#000";
-    ctx.fillText("NRSur", x + 14, y + h / 2);
+    ctx.font = "30px Arial"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
     ["unL", "PM", "gSIS", "CIS"].forEach(function (m, j) {
-      var cx = x + 128 + j * 108;
-      ctx.fillStyle = "#000"; ctx.textAlign = "center";
+      var cx = x + 24 + j * 108;
+      ctx.fillStyle = "#000";
       ctx.fillText(m, cx + 30, y + 20);
       ctx.strokeStyle = BASE[m]; ctx.lineWidth = LW;
       ctx.beginPath(); ctx.moveTo(cx + 6, y + 46); ctx.lineTo(cx + 54, y + 46); ctx.stroke();
@@ -141,12 +145,15 @@
   // 1: merged into the sum in the Livingston panel).
   function drawComponents(ctx, m, u) {
     var L = LAYOUT[m], a = ease(u / 0.6), fade = ease((u - 0.6) / 0.4);
-    // "+" signs between rows, fading out as the rows move
+    // component names left of the rows and "+" signs between them, fading out as the rows move
     if (a < 1) {
       ctx.save();
       ctx.globalAlpha = 1 - a;
-      ctx.fillStyle = "#000"; ctx.font = "56px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      for (var j = 0; j + 1 < L.length; j++) ctx.fillText("+", PANEL.L - 70, (L[j].y0 + L[j + 1].y0) / 2);
+      ctx.textBaseline = "middle";
+      ctx.font = "34px Arial"; ctx.textAlign = "right";
+      L.forEach(function (r) { ctx.fillStyle = r.c.color; ctx.fillText(COMP_LABEL[r.c.key], PANEL.L - 16, r.y0); });
+      ctx.fillStyle = "#000"; ctx.font = "48px Arial"; ctx.textAlign = "center";
+      for (var j = 0; j + 1 < L.length; j++) ctx.fillText("+", PANEL.L - 110, (L[j].y0 + L[j + 1].y0) / 2);
       ctx.restore();
     }
     L.forEach(function (r) {
@@ -182,8 +189,10 @@
 
     var stage = 0, raf = 0, t0 = 0, animModel = -1;
 
+    var titleEl = sl.querySelector(".gw231123-lensing-wtitle");
     function draw(u) {
       var ctx = setup(canvas);
+      titleEl.textContent = TITLES[stage];
       hLab.style.visibility = stage >= 8 ? "visible" : "hidden";
       axes(ctx, LOW, FL, YLIM.L1, true);
       line(ctx, D.L1.data, FL, DATA_COLOR, DATA_LW);

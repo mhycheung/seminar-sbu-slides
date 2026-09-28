@@ -99,10 +99,9 @@
 
 .gw231123-lensing-nsf {
   position: absolute;
-  right: 90px;
-  bottom: 50px;
   color: #d62728;
-  font-size: 56px;
+  font-size: 72px;
+  white-space: nowrap;
 }
 
 /* Bayes factor -> posterior odds (slide 5); the widget toggles .gw231123-lensing-odds. */
@@ -174,13 +173,18 @@
   white-space: nowrap;
 }
 
-/* Slide 6: the three-row table sits left, clear of "...not so fast". */
-.gw231123-lensing-tableleft {
-  justify-content: flex-start;
-  padding-left: 90px;
+/* Slide 6: the table sits right of the enlarged figure. */
+.gw231123-lensing-tableright {
+  left: 930px;
+  right: 10px;
 }
 
-.gw231123-lensing-tableleft th,
-.gw231123-lensing-tableleft td {
-  padding: 4px 22px;
+.gw231123-lensing-tableright th,
+.gw231123-lensing-tableright td {
+  padding: 8px 12px;
+}
+
+/* Slide 2: model name, shown only while that model is on screen. */
+.gw231123-lensing-wtitle:empty {
+  visibility: hidden;
 }
