@@ -9,8 +9,8 @@
   var NG = D.ng, SCALE = D.scale;
   var MODE_COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"];  // matplotlib C0-C3
   var KERR_COLOR = "#555555";
-  var FILL_ALPHA = 0.3;
-  var KERR_FILL_ALPHA = 0.45;
+  var FILL_ALPHA = 0.06;
+  var KERR_FILL_ALPHA = 0.15;
   var CELL = 3;                          // slide px per display-grid cell
   var CANVAS = { left: 330, top: 130, width: 1260, height: 810 };
   var MARGIN = { L: 120, R: 30, T: 20, B: 62 };
@@ -88,6 +88,12 @@
         d.style.transform = "translateX(-50%)";
       }
     });
+    var nm = document.createElement("div");   // number of free modes in the fit
+    nm.className = "rd-real-nmodes";
+    nm.textContent = S.n + " modes";
+    nm.style.left = (CANVAS.left + PR - 20) + "px";
+    nm.style.top = (CANVAS.top + PT + 16) + "px";
+    sl.appendChild(nm);
     var ctl = document.createElement("div");
     ctl.className = "rd-real-controls";
     ctl.innerHTML = '<svg class="rd-real-play" viewBox="0 0 48 48"></svg>' +

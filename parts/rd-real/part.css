@@ -123,3 +123,26 @@
   font-size: 40px;
   white-space: nowrap;
 }
+
+/* Number of modes in the fit, top right of the plot (user, 2026-09-28). */
+.rd-real-nmodes {
+  position: absolute;
+  transform: translateX(-100%);
+  font-size: 44px;
+  font-weight: bold;
+  padding: 4px 16px;
+  border: 3px solid #222;
+  background: #fff;
+  white-space: nowrap;
+}
+
+/* GWTC-5 pSEOBNR event count (paper macro \Nevents = 31). */
+.rd-real-count {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 975px;
+  margin: 0;
+  text-align: center;
+  font-size: 40px;
+}
