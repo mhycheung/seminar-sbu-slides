@@ -1,27 +1,20 @@
-.direct-wave-col {
-  position: absolute;
-  top: 40px;
-  width: 870px;
-  height: 1000px;
-}
-
-.direct-wave-quote {
-  height: 250px;
-  margin: 0;
-  font-size: 38px;
-  line-height: 1.3;
-  display: flex;
-  align-items: flex-end;
-}
-
 .direct-wave-fig {
-  margin: 20px 0 0 0;
+  position: absolute;
+  top: 160px;
+  width: 880px;
+  margin: 0;
   text-align: center;
 }
 
 .direct-wave-fig img {
   display: block;
+  height: 800px;
   margin: 0 auto;
+}
+
+/* Citations at body-text size (user, 2026-09-28). */
+.direct-wave-fig .cite {
+  font-size: 40px;
 }
 
 .direct-wave-canvas {
