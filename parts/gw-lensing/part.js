@@ -9,7 +9,7 @@
 //      halo (h_L = IFFT[F(w) h(f)], F from GLoW for a cored isothermal sphere)
 //   4  lens plane with many rays source -> plane -> Earth (thin lens: straight segments);
 //      the BBH shows its first frame, still (stages 4-5)
-//   5  rays coloured by the time delay T(x) of their plane point; colour bar "T (dimensionless)"
+//   5  rays coloured by the time delay T(x) of their plane point; colour bar "T"
 //   6  source, Earth, rays fade out; then the camera turns to face the plane, which moves left;
 //      contours of T in the same colours; the three images marked min, saddle, max (white
 //      rings; a red disc while the band stands at the image)
@@ -590,7 +590,7 @@
     // labels
     place(labels.it_x, (ib[0] + ib[2]) / 2, ib[3] + 70, v.frame);
     place(labels.it_y, ib[0] - 90, (ib[1] + ib[3]) / 2, v.frame);
-    place(labels.cb, lerp(960, PLANE_CX, v.cam), CB.y + CB.h + 92, v.cbar);
+    place(labels.cb, lerp(960, PLANE_CX, v.cam), CB.y + CB.h + 60, v.cbar);
     place(labels.f_x, (F_BOX[0] + F_BOX[2]) / 2, F_BOX[3] + 70, v.layout);
     place(labels.f_y, F_BOX[0] - 80, (F_BOX[1] + F_BOX[3]) / 2, v.layout);
     citePlot.style.opacity = v.frame;
@@ -609,7 +609,7 @@
         var box = slide.querySelector("#gw-lensing-labels");
         labels = {
           it_x: makeLabel(box, "$T"), it_y: makeLabel(box, "$\\frac{1}{2\\pi}\\frac{\\mathrm{d}A}{\\mathrm{d}T}", true),
-          cb: makeLabel(box, "$T\\ \\text{(dimensionless)}"),
+          cb: makeLabel(box, "$T"),
           f_x: makeLabel(box, "$w"), f_y: makeLabel(box, "$\\lvert F(w)\\rvert", true)
         };
       }
