@@ -26,3 +26,4 @@ pdftoppm -r 400, and figures/systematics_legend_horr_new_1-3.pdf rasterised at -
 cropped as in the paper (trim 20 pt left, 15 pt bottom: -x 111 -y 0 -W 2289 -H 317).
 The Bayes-factor row on the slide is typed from the paper's Table I (table_1.tex), embedded
 point lens: log10 B^L_U = 2.82 (NRSur), 5.0 (Phenom), 1.24 (SEOBNR).
+cheng_compound_lensing_probability.png: ongoing-work figure supplied by the user 2026-09-28 (compound-lensing probability p(CL) of the minimum image, CDM NFW halo, z_l = 0.5, z_s = 2, against halo mass), copied unchanged; work led by April Cheng.

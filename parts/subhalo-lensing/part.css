@@ -36,3 +36,15 @@
 .subhalo-lensing-bf tr:first-child td {
   border-bottom: 2px solid #000;
 }
+
+/* Green bold credit line at the bottom of subhalo-lensing-rates, under the ongoing-work figure
+   (user, 2026-09-28). */
+.subhalo-lensing-credit {
+  position: absolute;
+  left: 790px;
+  width: 1040px;
+  top: 985px;
+  text-align: center;
+  color: #008000;
+  font-weight: bold;
+}
