@@ -1,0 +1,13 @@
+Assets of the gw231123-lensing part (task t09-gw231123-lensing, subtask S1). Figures: the
+paper's vector PDFs from the arXiv source, rendered with `pdftoppm -r 300` and white margins
+trimmed (tasks/t09-gw231123-lensing/S1/trim_png.py). Figure numbers are those of the arXiv PDF.
+
+lvk_fig3_m1m2.png: figures/mass_1_mass_2_contour.pdf, arXiv 2507.08219 (v3), Figure 3 (source masses m1, m2).
+lvk_fig4_a1a2.png: figures/a_1_a_2_contour.pdf, arXiv 2507.08219 (v3), Figure 4 (spin magnitudes chi1, chi2).
+cheung_fig1_yMLz.png: y_MLz_cornerplot.pdf, arXiv 2607.21834 (v1), Fig. 1, top panel (M_Lz against y).
+cheung_fig2_m1m2.png: m1m2_cornerplot.pdf, arXiv 2607.21834 (v1), Fig. 2, left panel.
+cheung_fig2_a1a2.png: a1a2_cornerplot.pdf, arXiv 2607.21834 (v1), Fig. 2, right panel.
+cheung_fig7_tau.png: nfw_gsis_tau.pdf, arXiv 2607.21834 (v1), Fig. 7, right panel (differential optical depth).
+cheung_fig9_pop.png: panels_7d_paper_style.pdf, arXiv 2607.21834 (v1), Fig. 9 (full figure).
+news_gizmodo.png: screenshot of Gizmodo, "Astronomers Detect a Black Hole Merger That's So Massive It Shouldn't Exist", by Gayoung Lee, published 13 Jul 2025, 7:01 PM ET (2025-07-13T23:01 UTC), https://gizmodo.com/astronomers-detect-a-black-hole-merger-thats-so-massive-it-shouldnt-exist-2000628197, accessed 2026-09-27; headless Chromium, 1600 px viewport, device scale factor 2, ads and overlays hidden, cropped to headline, byline/date and lead image (tasks/t09-gw231123-lensing/S1/shot_news.js). Lead image credit on the page: Caltech-LIGO.
+All figure PNGs were then downscaled (Lanczos) to at most twice their displayed width on the slide.

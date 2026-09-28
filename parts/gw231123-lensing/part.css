@@ -1,0 +1,186 @@
+/* GW231123 lensing part. Citations at 40 px, the body size, as in the rd-real part. */
+.gw231123-lensing-fig {
+  position: absolute;
+  margin: 0;
+  text-align: center;
+}
+
+.gw231123-lensing-fig img {
+  display: block;
+  width: 100%;
+}
+
+.gw231123-lensing-fig .cite,
+.gw231123-lensing-wave-cite .cite,
+.gw231123-lensing-src-cite .cite,
+.gw231123-lensing-freq-cite .cite,
+.gw231123-lensing-side-cite .cite {
+  font-size: 40px;
+}
+
+.gw231123-lensing-wave-cite {
+  position: absolute;
+  right: 90px;
+  bottom: 18px;
+}
+
+.gw231123-lensing-src-cite {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 610px;
+  text-align: center;
+}
+
+.gw231123-lensing-freq-cite {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 860px;
+  text-align: center;
+}
+
+.gw231123-lensing-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+
+.gw231123-lensing-label {
+  position: absolute;
+  font-size: 36px;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+.gw231123-lensing-ylabel {
+  transform: translate(-50%, -50%) rotate(-90deg);
+  font-size: 30px;
+}
+
+/* Tables of log10 Bayes factors and odds (slides 4, 6, 8). */
+.gw231123-lensing-tablebox {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.gw231123-lensing-table {
+  border-collapse: collapse;
+  font-size: 40px;
+}
+
+.gw231123-lensing-table th,
+.gw231123-lensing-table td {
+  padding: 6px 36px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.gw231123-lensing-table th {
+  font-weight: normal;
+  border-bottom: 2px solid #000;
+}
+
+.gw231123-lensing-table td:first-child,
+.gw231123-lensing-table th:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+
+.gw231123-lensing-table tr.gw231123-lensing-rule td {
+  border-top: 5px solid #000;
+  padding-top: 14px;
+}
+
+.gw231123-lensing-nsf {
+  position: absolute;
+  right: 90px;
+  bottom: 50px;
+  color: #d62728;
+  font-size: 56px;
+}
+
+/* Bayes factor -> posterior odds (slide 5); the widget toggles .gw231123-lensing-odds. */
+.gw231123-lensing-odds-title {
+  display: none;
+}
+
+.gw231123-lensing-odds .gw231123-lensing-odds-title {
+  display: inline;
+}
+
+.gw231123-lensing-formula {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 330px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 80px;
+}
+
+.gw231123-lensing-lhs {
+  display: inline-grid;
+  margin-right: 0.25em;
+}
+
+.gw231123-lensing-lhs > span {
+  grid-area: 1 / 1;
+  text-align: right;
+  transition: opacity 0.6s;
+}
+
+.gw231123-lensing-lhs-o,
+.gw231123-lensing-odds .gw231123-lensing-lhs-b {
+  opacity: 0;
+}
+
+.gw231123-lensing-odds .gw231123-lensing-lhs-o {
+  opacity: 1;
+}
+
+.gw231123-lensing-prior {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 0;
+  opacity: 0;
+  transition: max-width 0.8s, opacity 0.8s;
+}
+
+.gw231123-lensing-odds .gw231123-lensing-prior {
+  max-width: 500px;
+  opacity: 1;
+}
+
+.gw231123-lensing-question {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 740px;
+  text-align: center;
+  color: #d62728;
+  font-size: 56px;
+}
+
+.gw231123-lensing-side-cite {
+  position: absolute;
+  white-space: nowrap;
+}
+
+/* Slide 6: the three-row table sits left, clear of "...not so fast". */
+.gw231123-lensing-tableleft {
+  justify-content: flex-start;
+  padding-left: 90px;
+}
+
+.gw231123-lensing-tableleft th,
+.gw231123-lensing-tableleft td {
+  padding: 4px 22px;
+}
