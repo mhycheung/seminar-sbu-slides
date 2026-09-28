@@ -18,7 +18,7 @@
 // exp(-((rho/r - CORE)/SOFT)^1.5): 0.78 at rho = r, 0.53 at 1.5 r, 0.33 at 2 r, 0.10 at 3 r.
 // Each view's tail is tapered to zero at a radius Rt about its centre, so no canvas or
 // slide edge cuts it. The remnant horizon is a dark ring of the animation's final radius
-// R_final, the light ring a yellow dashed circle at LR R_final, labelled on ringdown-quad.
+// R_final, the light ring a yellow dashed circle at LR R_final (Kerr, chi = 0.7), labelled on ringdown-quad.
 // The quadrupole pictures are schematic: blob r(phi) = R [1 + eps A cos(m (phi - angle))].
 (function () {
   "use strict";
@@ -41,7 +41,9 @@
   var SOFT = 1.5;           // width of the soft fall-off, in units of r
   var DS = 3;               // soft layers: one sample per DS x DS backing pixels
   var LR_COLOR = "#e0a000"; // light ring
-  var LR = 1.5;             // light-ring radius / horizon radius (schematic)
+  // Light-ring radius / horizon radius: prograde equatorial light ring over r_+ of Kerr at
+  // chi = 0.7, Boyer-Lindquist r (2.0133 / 1.7141), the same as the direct-wave part.
+  var LR = 1.1745;
   var ZOOM = 1.6;           // zoom of the quadrupole view
   // Remnant of the run: M_f = 0.9555 M, a_f = 0.6870 (tasks/t04-ringdown/qnm_values.py).
   // QNM frequencies M_f omega at a_f = 0.6870 (qnm package 0.4.4).
