@@ -37,14 +37,14 @@
   border-bottom: 2px solid #000;
 }
 
-/* Green bold credit line at the bottom of subhalo-lensing-rates, under the ongoing-work figure
-   (user, 2026-09-28). */
+/* Green bold credit line at the bottom of subhalo-lensing-rates, under the ongoing-work figure,
+   centred on its plotting region (x 950-1774 px on the slide) (user, 2026-09-28). */
 .subhalo-lensing-credit {
   position: absolute;
-  left: 790px;
-  width: 1040px;
-  top: 985px;
-  text-align: center;
+  left: 1362px;
+  top: 945px;
+  transform: translateX(-50%);
+  white-space: nowrap;
   color: #008000;
   font-weight: bold;
 }
