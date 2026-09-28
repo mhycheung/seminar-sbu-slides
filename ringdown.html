@@ -13,6 +13,13 @@
 <div class="deck">
 <!-- part: ringdown -->
 <script src="parts/ringdown/assets/ringdown-data.js"></script>
+<script src="parts/ringdown/assets/ringdown-title-data.js"></script>
+<section class="slide" id="ringdown-title">
+  <h1 class="title">Black Hole Ringdown</h1>
+  <canvas id="ringdown-title-wave" class="ringdown-title-wave"></canvas>
+  <div class="ringdown-title-cite"><span class="cite">Boyle+ (1904.04831)</span></div>
+</section>
+
 <section class="slide" id="ringdown-merger">
   <canvas id="ringdown-canvas" class="ringdown-canvas ringdown-soft-left" width="960" height="1080"></canvas>
   <canvas id="ringdown-ring" class="ringdown-canvas ringdown-right" width="900" height="900"></canvas>
@@ -36,12 +43,14 @@
   <div id="ringdown-sum-terms" class="ringdown-fade">
     <div class="ringdown-op" style="left: 510px;">$=$</div>
     <canvas id="ringdown-sum-22" class="ringdown-mode" style="left: 410px;" width="600" height="600"></canvas>
+    <div class="ringdown-lm ringdown-sum-lm" style="left: 710px;">$\ell m = 22$</div>
+  </div>
+  <div id="ringdown-sum-more" class="ringdown-fade">
     <div class="ringdown-op" style="left: 900px;">$+$</div>
     <canvas id="ringdown-sum-33" class="ringdown-mode" style="left: 790px;" width="600" height="600"></canvas>
     <div class="ringdown-op" style="left: 1280px;">$+$</div>
     <canvas id="ringdown-sum-44" class="ringdown-mode" style="left: 1170px;" width="600" height="600"></canvas>
     <div class="ringdown-op" style="left: 1720px;">$+ \cdots$</div>
-    <div class="ringdown-lm ringdown-sum-lm" style="left: 710px;">$\ell m = 22$</div>
     <div class="ringdown-lm ringdown-sum-lm" style="left: 1090px;">$\ell m = 33$</div>
     <div class="ringdown-lm ringdown-sum-lm" style="left: 1470px;">$\ell m = 44$</div>
   </div>

@@ -50,3 +50,6 @@
   white-space: nowrap;
 }
 .ringdown-sum-lm { top: 415px; font-size: 40px; }
+.ringdown-title-wave { position: absolute; left: 120px; top: 250px; width: 1680px; height: 680px; }
+/* Credit (R11), bottom right, as on the qnm-fit part. */
+.ringdown-title-cite { position: absolute; right: 60px; bottom: 15px; white-space: nowrap; }

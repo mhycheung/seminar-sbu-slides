@@ -1,6 +1,8 @@
 // Black-hole merger from the prod_n24 NR run, drawn as a metaball field (schematic), and
-// what the ringdown is made of. Three slides:
+// what the ringdown is made of. Four slides:
 //
+// ringdown-title: the title over Re h_22 of SXS:BBH:0305 from two cycles before the peak of
+//   |h_22|; the ringdown (after the peak) highlighted, with a soft boundary. No stages.
 // ringdown-merger: left, the merger; right, a ring of test masses driven by the NR strain
 //   h_22 at the same time, face-on (circular polarisation), in the style of the gw-ring part.
 //   Stage 0: the binary before merger. Stage 1: inspiral up to the common horizon, then
@@ -9,7 +11,7 @@
 //   at the same scale and height, "~ a symmetric l = m = 2 blob"; the left view fades while
 //   the blob zooms; horizon; ringdown; light ring; EHT image; a decaying 220 waveform; below
 //   it, the complex plane with the 220 and 221 frequencies.
-// ringdown-sum: the full ringdown = 22 + 33 + 44 + ..., frozen at merger until a step
+// ringdown-sum: the full ringdown = 22, then + 33 + 44 + ..., frozen at merger until a step
 //   starts the ringdown; then the complex plane.
 //
 // All shapes are drawn soft: a black core out to CORE r, fading outside as
@@ -376,6 +378,55 @@
     };
   }
 
+  // ======================= slide 0: title =======================
+  // Re h_22 of SXS:BBH:0305 (tasks/t04-ringdown/make_title_wave.py), t in M_f from the peak of
+  // |h_22|. The ringdown, t > 0, is drawn in HL_COLOR on a pale band; both fade in over
+  // [-HL_EDGE, 0] M_f, so the boundary is soft.
+  (function () {
+    var W = RINGDOWN_TITLE, HL_COLOR = "31, 119, 180", HL_EDGE = 8, BAND = 0.13;
+    var canvas, run, drawn = 0;
+    function draw() {
+      var k = fit(canvas);
+      if (k === drawn) return;
+      drawn = k;
+      var ctx = canvas.getContext("2d"), w = canvas.width, h = canvas.height;
+      var t0 = W.tStart, t1 = W.t[W.t.length - 1], amax = 0;
+      W.re.forEach(function (v) { amax = Math.max(amax, Math.abs(v)); });
+      function X(t) { return (t - t0) / (t1 - t0) * w; }
+      function Y(v) { return h / 2 - v / amax * 0.46 * h; }
+      ctx.clearRect(0, 0, w, h);
+      var g = ctx.createLinearGradient(X(-HL_EDGE), 0, X(0), 0);
+      g.addColorStop(0, "rgba(" + HL_COLOR + ", 0)");
+      g.addColorStop(1, "rgba(" + HL_COLOR + ", " + BAND + ")");
+      ctx.fillStyle = g;
+      ctx.fillRect(X(-HL_EDGE), 0, w - X(-HL_EDGE), h);
+      var gl = ctx.createLinearGradient(X(-HL_EDGE), 0, X(0), 0);
+      gl.addColorStop(0, "#333");
+      gl.addColorStop(1, "rgb(" + HL_COLOR + ")");
+      ctx.strokeStyle = gl;
+      ctx.lineWidth = 5 * k;
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      W.t.forEach(function (t, i) {
+        if (t < t0) return;
+        var x = X(t), y = Y(W.re[i]);
+        if (t === W.t[0] || W.t[i - 1] < t0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+    Deck.widget("ringdown-title", {
+      steps: 0,
+      enter: function (slide) {
+        canvas = slide.querySelector("#ringdown-title-wave");
+        drawn = 0;
+        run = Runner(draw);  // redraws only when the on-screen size changes
+        run.start();
+      },
+      leave: function () { run.stop(); },
+      step: function () { draw(); }
+    });
+  })();
+
   // ======================= slide 1: merger and ring =======================
   (function () {
     var view, rcanvas, run, left = still(T_START);
@@ -484,21 +535,22 @@
   })();
 
   // ======================= slide 3: the sum of modes =======================
-  // Stage 0: the NR remnant, frozen at merger. Stage 1: "= 22 + 33 + 44 + ...", blobs only,
-  // still frozen. Stage 2: horizons and light rings on the blobs. Stage 3: the
+  // Stage 0: the NR remnant, frozen at merger. Stage 1: "= 22", blob only, still frozen.
+  // Stage 2: "+ 33 + 44 + ...". Stage 3: horizons and light rings on the blobs. Stage 4: the
   // merger-to-ringdown loop starts, each l = m blob turning and decaying at its own QNM
-  // frequency, in step with it. Stage 4: the complex plane with 220, 221, 330, 331, 440, 441.
+  // frequency, in step with it. Stage 5: the complex plane with 220, 221, 330, 331, 440, 441.
   (function () {
-    var view, modes, terms, planeBox, plane = null, run, loop, ov = P(0);
+    var view, modes, terms, more, planeBox, plane = null, run, loop, ov = P(0);
     var MODE_EPS = { 2: EPS, 3: 0.3, 4: 0.25 };
 
     Deck.widget("ringdown-sum", {
-      steps: 4,
+      steps: 5,
       enter: function (slide) {
         var s = sample(D.tCommon + 50);
         view = SoftMergerView(slide.querySelector("#ringdown-sum-full"), 400 / 11, s.acx, s.acy, 255);
         modes = [2, 3, 4].map(function (m) { return [m, slide.querySelector("#ringdown-sum-" + m + m)]; });
         terms = slide.querySelector("#ringdown-sum-terms");
+        more = slide.querySelector("#ringdown-sum-more");
         planeBox = slide.querySelector("#ringdown-sum-plane");
         if (!plane) plane = Plane(planeBox, [0.38, 1.22], [0.04, 0.36], range(0.4, 1.2, 0.2), range(0.05, 0.35, 0.05),
                                   ["220", "221", "330", "331", "440", "441"]);
@@ -518,11 +570,12 @@
       },
       leave: function () { run.stop(); },
       step: function (slide, k, dir) {
-        var inst = dir < 0, on = k >= 4;
-        set(ov, k >= 2 ? 1 : 0, performance.now(), inst || k !== 2, 500);
-        if (k < 3) loop = still(D.tCommon);
+        var inst = dir < 0, on = k >= 5;
+        set(ov, k >= 3 ? 1 : 0, performance.now(), inst || k !== 3, 500);
+        if (k < 4) loop = still(D.tCommon);
         else if (!loop.loop) loop = clip(D.tCommon, T_RD_END, SPEED_RINGDOWN, true, performance.now());
         fade(terms, k >= 1, inst);
+        fade(more, k >= 2, inst);
         fade(planeBox, on, inst);
         plane.shown = { "220": on, "221": on, "330": on, "331": on, "440": on, "441": on };
       }
