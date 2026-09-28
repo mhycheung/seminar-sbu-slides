@@ -43,3 +43,11 @@
   font-size: 34px;
   opacity: 0.5;
 }
+
+/* Credits (R11), bottom right, below the plots. */
+.qnm-fit-cite {
+  position: absolute;
+  right: 60px;
+  bottom: 15px;
+  white-space: nowrap;
+}
