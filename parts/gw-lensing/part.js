@@ -1,4 +1,4 @@
-// Gravitational-wave lensing, one slide (gw-lensing-main, 14 steps). A 3D scene seen
+// Gravitational-wave lensing, one slide (gw-lensing-main, 15 steps). A 3D scene seen
 // nearly from the side (perspective camera, optical axis left to right), then the lens
 // plane face-on and the contour method for the time-domain amplification factor.
 //   0  large dark diffuse halo, a light source on the left, Earth on the right, two smooth rays
@@ -17,7 +17,8 @@
 //   7  empty plot frame on the right: T, (1/2pi) dA/dT
 //   8-10 one band between successive contours per step, filled red; its area on the plot
 //   11 the band moves out to the saddle image; 12 to the maximum image; 13 to the end
-//   14 |F(w)| panel below the time-domain plot
+//   14 |F(w)| panel below the time-domain plot, with room left below it
+//   15 h_L(f) = F(f) h(f) below the |F(w)| panel
 //
 // Lens: cored isothermal sphere, psi(x) = psi0 (r + rc ln(2 rc/(r + rc))), r = sqrt(x^2 + rc^2),
 // T(x) = |x - y|^2/2 - psi(x) (GLoW 0.1), y along x1. Numbers and checks: tasks/t08-gw-lensing/S1/.
@@ -55,7 +56,7 @@
   var BAND_RED = [205, 55, 40];
   var TAU_S = D.images[1].t, TAU_M = D.images[2].t, TAU_END = D.tauMax, DT = D.dtau;
   var TEX = D.grid;         // lens-plane texture = grid of the band check (S1)
-  var I_BOX0 = [1090, 150, 1800, 840], I_BOX1 = [1090, 60, 1800, 400], F_BOX = [1090, 530, 1800, 870];
+  var I_BOX0 = [1090, 150, 1800, 840], I_BOX1 = [1090, 40, 1800, 330], F_BOX = [1090, 470, 1800, 750];
   var I_Y = [0, 9], F_Y = [0, 7];
   var CB = { w: 600, h: 26, y: 930 };      // colour bar; its label sits below the tick numbers
   var VIRIDIS = [[68, 1, 84], [72, 40, 120], [62, 74, 137], [49, 104, 142], [38, 130, 142],
@@ -517,7 +518,7 @@
   var scene, bbh, run, labels, citePlot, clock = null, freezeT = null;
   var p = {};
   ["light", "bbh", "emRays", "halo", "wave2", "wave1", "plane", "rays", "rayColor", "cbar", "scene", "cam",
-   "contour", "marks", "mass", "frame", "tau", "band", "layout", "fprog"].forEach(function (k) { p[k] = P(0); });
+   "contour", "marks", "mass", "frame", "tau", "band", "layout", "fprog", "eq"].forEach(function (k) { p[k] = P(0); });
   p.halo = P(1); p.light = P(1); p.emRays = P(1); p.scene = P(1);
 
   function srcTime(now) {
@@ -596,11 +597,12 @@
     place(labels.mass, qL[0], qL[1] + 100, v.mass);
     place(labels.f_x, (F_BOX[0] + F_BOX[2]) / 2, F_BOX[3] + 70, v.layout);
     place(labels.f_y, F_BOX[0] - 80, (F_BOX[1] + F_BOX[3]) / 2, v.layout);
+    place(labels.eq, (F_BOX[0] + F_BOX[2]) / 2, F_BOX[3] + 160, v.eq);
     citePlot.style.opacity = v.frame;
   }
 
   Deck.widget("gw-lensing-main", {
-    steps: 14,
+    steps: 15,
     enter: function (slide) {
       scene = slide.querySelector("#gw-lensing-scene");
       bbh = slide.querySelector("#gw-lensing-bbh");
@@ -613,8 +615,10 @@
         labels = {
           it_x: makeLabel(box, "$T"), it_y: makeLabel(box, "$\\frac{1}{2\\pi}\\frac{\\mathrm{d}A}{\\mathrm{d}T}", true),
           cb: makeLabel(box, "$T"), mass: makeLabel(box, "$M_{Lz} \\lesssim 10^4\\,M_\\odot"),
-          f_x: makeLabel(box, "$w"), f_y: makeLabel(box, "$\\lvert F(w)\\rvert", true)
+          f_x: makeLabel(box, "$w"), f_y: makeLabel(box, "$\\lvert F(w)\\rvert", true),
+          eq: makeLabel(box, "$h_L(f) = F(f)\\, h(f)")
         };
+        labels.eq.style.fontSize = "44px";
       }
       run = Runner(frame);
       run.start();
@@ -656,6 +660,7 @@
       // so with ease-out it shrinks at a steady rate and closes as the band stops
       else set(p.tau, tau, now, inst, k === 11 ? 2000 : k === 12 ? 2500 : 6000, k === 12 ? "out" : true);
       set(p.layout, k >= 14 ? 1 : 0, now, inst, 1200);
+      set(p.eq, k >= 15 ? 1 : 0, now, inst, 700);
       set(p.fprog, k >= 14 ? 1 : 0, now, inst, 2500, true, k === 14 ? 1000 : 0);
     }
   });
