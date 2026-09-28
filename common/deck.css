@@ -82,28 +82,56 @@ html, body {
   font-weight: bold;
 }
 
-/* Stitched deck only (added by build.py): a thin progress bar along the bottom edge and
-   the time of day, bottom left, both faint. */
+/* Stitched presentation only (added by build.py): a thin progress bar along the bottom
+   edge with a knob to drag, and the time of day, bottom left, both faint. The bar's box is
+   taller than the line it draws, so that the knob is easy to grab. */
 .deck-progress {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 26px;
+  z-index: 10;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.deck-progress-track {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 4px;
-  z-index: 10;
-  pointer-events: none;
+  bottom: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: #eeeeee;
 }
 
 .deck-progress-fill {
   height: 100%;
   width: 0;
-  background: #d8d8d8;
+  border-radius: 3px;
+  background: #c4c4c4;
+}
+
+.deck-progress-knob {
+  position: absolute;
+  bottom: 1px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: #a8a8a8;
+}
+
+.deck-progress:hover .deck-progress-knob,
+.deck-progress.dragging .deck-progress-knob {
+  background: #808080;
 }
 
 .deck-clock {
   position: absolute;
   left: 12px;
-  bottom: 8px;
+  bottom: 30px;
   z-index: 10;
   font-size: 18px;
   line-height: 1;

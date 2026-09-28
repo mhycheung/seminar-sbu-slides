@@ -48,7 +48,40 @@
     s = step;
     showStep(cur, s, dir);
     var bar = deckEl.querySelector(".deck-progress-fill");
-    if (bar) bar.style.width = (100 * (cur + 1) / slides.length) + "%";
+    if (bar) {
+      var f = slides.length > 1 ? cur / (slides.length - 1) : 1;
+      bar.style.width = (100 * f) + "%";
+      deckEl.querySelector(".deck-progress-knob").style.left = (100 * f) + "%";
+    }
+  }
+
+  // Progress bar (presentation only): pressing or dragging on it jumps to the slide under
+  // the pointer, at its arrival stage. This is the one mouse control that changes slides.
+  function seekable() {
+    var el = deckEl.querySelector(".deck-progress");
+    if (!el) return;
+    var track = el.querySelector(".deck-progress-track");
+    function seek(e) {
+      var r = track.getBoundingClientRect();
+      var f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      var i = Math.round(f * (slides.length - 1));
+      if (i !== cur) go(i, 0, 1);
+    }
+    el.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      el.classList.add("dragging");
+      seek(e);
+    });
+    el.addEventListener("pointermove", function (e) {
+      if (el.hasPointerCapture(e.pointerId)) seek(e);
+    });
+    function end(e) {
+      el.classList.remove("dragging");
+      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+    }
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
   }
 
   // Time of day, bottom left; present only in the stitched deck.
@@ -123,6 +156,7 @@
     fit();
     tick();
     if (deckEl.querySelector(".deck-clock")) setInterval(tick, 5000);
+    seekable();
     window.addEventListener("resize", fit);
     window.addEventListener("keydown", onKey, true);
     window.addEventListener("keyup", onKey, true);
