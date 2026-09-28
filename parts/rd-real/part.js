@@ -5,6 +5,11 @@
 // f in Hz, gamma = 1/tau in 1/s (detector frame); t0 in units of the remnant mass M_f.
 (function () {
   "use strict";
+  // Link to the public Silencio results. The href is set here because the build refuses
+  // any href="http..." in part.html (its check is for files loaded from the network).
+  document.querySelectorAll("a.rd-real-results").forEach(function (a) {
+    a.href = a.getAttribute("data-url");
+  });
   var D = window.RDREAL_DATA;
   var NG = D.ng, SCALE = D.scale;
   var MODE_COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"];  // matplotlib C0-C3

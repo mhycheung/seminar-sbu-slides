@@ -17,6 +17,11 @@
   font-weight: bold;
 }
 
+.rd-real-results {
+  color: #0645ad;
+  white-space: nowrap;
+}
+
 .rd-real-collab {
   position: absolute;
   top: 130px;
