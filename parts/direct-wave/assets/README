@@ -1,0 +1,7 @@
+Assets of the direct-wave part (task t11-direct-wave).
+
+- oshita_fig3_top_bottom.png: Oshita+ (2509.09165) Fig. 3 (source file EMRI_0.8.pdf), rendered
+  at 300 dpi; top and bottom panels only (the middle panel, the decay rate, is removed).
+- lu_fig1_sketch.png: Lu+ (2510.01001) Fig. 1 (source file figs/horizon.png), unchanged.
+- direct-wave-traj.js, dw_original_panel.png: from Cheung (2608.29466) data in the dw project,
+  made by tasks/t11-direct-wave/S1/make_dw_data.py.
