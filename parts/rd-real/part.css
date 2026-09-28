@@ -9,6 +9,13 @@
   width: 100%;
 }
 
+.rd-real-kind {
+  position: absolute;
+  top: 30px;
+  left: 50px;
+  color: #8b4513;
+}
+
 .rd-real-collab {
   position: absolute;
   top: 130px;
@@ -139,4 +146,10 @@
   margin: 0;
   text-align: center;
   font-size: 40px;
+}
+
+/* The Silencio title is long: centre it between the "real data" and "ongoing work" labels. */
+#rd-real-silencio > h1.title,
+#rd-real-silencio > .rd-real-collab {
+  right: 105px;
 }
