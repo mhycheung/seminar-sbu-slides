@@ -10,3 +10,32 @@
   width: 260px;
   height: 260px;
 }
+
+/* Figures from other papers (slides subhalo-lensing-goyal, subhalo-lensing-rates). */
+.subhalo-lensing-fig {
+  position: absolute;
+  margin: 0;
+  text-align: center;
+}
+.subhalo-lensing-fig img {
+  display: block;
+  width: 100%;
+}
+
+/* Screenshot of the Science news article; a light gray frame marks its place while
+   assets/science_article.png is missing (part.js hides the broken image). */
+.subhalo-lensing-news {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px dashed #c0c0c0;
+}
+.subhalo-lensing-news.subhalo-lensing-has-img {
+  border: none;
+}
+.subhalo-lensing-news img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: top;
+}

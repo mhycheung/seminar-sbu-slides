@@ -9,3 +9,17 @@ slides/parts/gw-lensing/assets/gw-lensing-data.js (task t08-gw-lensing).
 earth_apollo17_400.png: copy of slides/parts/gw-lensing/assets/earth_apollo17_400.png.
 "The Blue Marble", NASA / Apollo 17 crew, 7 December 1972; public domain (NASA),
 NASA GRIN GPN-2000-001138, via Wikimedia Commons. Cropped to the disk, 400x400.
+
+goyal_l1_fit_decomposition.png: Goyal+ (2512.17631), figures/L1_data_plus_decomposition.pdf
+from the arXiv source (lit_cache/arxiv-2512.17631-src.tar.gz), rasterised with
+pdftoppm -r 400. GW231123 L1 data (cWB reconstruction) with the embedded point-lens best fit
+and the unlensed best fit; decomposition into main image, secondary image, diffraction.
+
+vujeva_fig3_lensing_rates.png: Vujeva+ (2608.07667) Fig. 3, figures/figure_3_lensing_rates.pdf
+from the arXiv source (lit_cache/arxiv-2608.07667-src.tar.gz), rasterised with pdftoppm -r 300.
+Detections against year: GW events, strongly lensed, and IMBH+GC lensed (well below 1).
+
+science_article.png: NOT YET PRESENT. Screenshot of Science news, "Extreme black hole merger
+may be a cosmic illusion",
+https://www.science.org/content/article/extreme-black-hole-merger-may-be-cosmic-illusion .
+Headless Chromium gets a Cloudflare challenge there (tasks/t10-subhalo-lensing/S2/).

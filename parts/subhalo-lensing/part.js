@@ -316,3 +316,16 @@
     }
   });
 })();
+
+// Science article screenshot (slide subhalo-lensing-goyal): drop the placeholder frame once
+// the image loads; hide the broken image while assets/science_article.png is missing.
+(function () {
+  "use strict";
+  var box = document.querySelector("#subhalo-lensing-goyal .subhalo-lensing-news");
+  if (!box) return;
+  var img = box.querySelector("img");
+  function ok() { box.classList.add("subhalo-lensing-has-img"); }
+  function bad() { img.style.visibility = "hidden"; }
+  if (img.complete) { if (img.naturalWidth > 0) ok(); else bad(); }
+  else { img.addEventListener("load", ok); img.addEventListener("error", bad); }
+})();
