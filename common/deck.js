@@ -81,9 +81,26 @@
     if (n) next(); else prev();
   }
 
+  // Every credit with one arXiv number, "Smith+ (2401.12345)", becomes a link to the
+  // paper's arXiv abstract page. The credit's look does not change.
+  function linkCites() {
+    deckEl.querySelectorAll(".cite").forEach(function (c) {
+      if (c.querySelector("a")) return;
+      var ids = c.textContent.match(/\b\d{4}\.\d{4,5}\b/g);
+      if (!ids || ids.length !== 1) return;
+      var a = document.createElement("a");
+      a.className = "cite-link";
+      a.href = "https://arxiv.org/abs/" + ids[0];
+      a.target = "_blank";
+      while (c.firstChild) a.appendChild(c.firstChild);
+      c.appendChild(a);
+    });
+  }
+
   function start() {
     deckEl = document.querySelector(".deck");
     slides = Array.prototype.slice.call(deckEl.querySelectorAll(".slide"));
+    linkCites();
     if (window.renderMathInElement) {
       renderMathInElement(deckEl, {
         delimiters: [

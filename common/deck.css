@@ -63,6 +63,14 @@ html, body {
   font-size: 40px;
 }
 
+/* The link deck.js puts inside a credit, to the arXiv abstract page; looks like the credit. */
+.cite a.cite-link {
+  position: relative;   /* above figures and canvases drawn later, so clicks reach it */
+  z-index: 5;
+  color: inherit;
+  text-decoration: none;
+}
+
 /* Label on a slide that shows ongoing work: bold red "ongoing work", top right. */
 .ongoing {
   position: absolute;

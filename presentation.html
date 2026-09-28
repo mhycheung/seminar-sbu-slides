@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>deck</title>
+<title>presentation</title>
 <link rel="stylesheet" href="vendor/katex/katex.min.css">
 <link rel="stylesheet" href="common/deck.css">
 <link rel="stylesheet" href="parts/title/part.css">
@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="parts/qnm-fit/part.css">
 <link rel="stylesheet" href="parts/qnm-amp/part.css">
 <link rel="stylesheet" href="parts/rd-real/part.css">
+<link rel="stylesheet" href="parts/direct-wave/part.css">
 <link rel="stylesheet" href="parts/gw-lensing/part.css">
 <link rel="stylesheet" href="parts/gw231123-lensing/part.css">
 <link rel="stylesheet" href="parts/subhalo-lensing/part.css">
@@ -276,6 +277,26 @@
   <div class="rd-real-kind">simulated data</div>
   <div class="ongoing">ongoing work</div>
 </section>
+<!-- part: direct-wave -->
+<script src="parts/direct-wave/assets/direct-wave-traj.js"></script>
+<section class="slide" id="direct-wave-background">
+  <h1 class="title">Does the ringdown probe the horizon?</h1>
+  <figure class="direct-wave-fig" style="left:40px">
+    <img src="parts/direct-wave/assets/oshita_fig3_top_bottom.png" alt="">
+    <span class="cite">Oshita+ (2509.09165)</span>
+  </figure>
+  <figure class="direct-wave-fig" style="left:1000px">
+    <img src="parts/direct-wave/assets/lu_fig1_sketch.png" alt="">
+    <span class="cite">Lu+ (2510.01001)</span>
+  </figure>
+</section>
+
+<section class="slide" id="direct-wave-plunge">
+  <canvas class="direct-wave-canvas" style="left:40px; top:110px; width:860px; height:860px"></canvas>
+  <img class="direct-wave-panel" src="parts/direct-wave/assets/dw_original_panel.png" alt=""
+       style="left:930px; top:212px; width:950px">
+  <span class="cite direct-wave-own"><u>Cheung</u> (2608.29466)</span>
+</section>
 <!-- part: gw-lensing -->
 <script src="parts/gw-lensing/assets/gw-lensing-data.js"></script>
 <section class="slide" id="gw-lensing-title">
@@ -450,6 +471,7 @@
 <script src="parts/qnm-fit/part.js"></script>
 <script src="parts/qnm-amp/part.js"></script>
 <script src="parts/rd-real/part.js"></script>
+<script src="parts/direct-wave/part.js"></script>
 <script src="parts/gw-lensing/part.js"></script>
 <script src="parts/gw231123-lensing/part.js"></script>
 <script src="parts/subhalo-lensing/part.js"></script>
