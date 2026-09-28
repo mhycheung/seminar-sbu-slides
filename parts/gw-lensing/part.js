@@ -7,7 +7,8 @@
 //   2  waves and paths fade, the BBH stops; then the halo shrinks
 //   3  one path; the BBH runs again; the wave changes from unlensed to diffracted at the
 //      halo (h_L = IFFT[F(w) h(f)], F from GLoW for a cored isothermal sphere)
-//   4  lens plane with many rays source -> plane -> Earth (thin lens: straight segments)
+//   4  lens plane with many rays source -> plane -> Earth (thin lens: straight segments);
+//      the BBH shows its first frame, still (stages 4-5)
 //   5  rays coloured by the time delay T(x) of their plane point; colour bar "T (dimensionless)"
 //   6  source, Earth, rays fade out; then the camera turns to face the plane, which moves left;
 //      contours of T in the same colours; the three images marked min, saddle, max (white
@@ -47,7 +48,7 @@
   var AMP = 0.035;          // world units of transverse displacement at the unlensed peak
   var GAIN_L = 1.6;         // displayed peak of the diffracted wave / unlensed peak (schematic;
                             // the computed ratio, max |h_L| / max |h|, is 6.1)
-  var LOOP_T0 = 650, LOOP_T1 = 850, NR_SPEED = 90, LOOP_HOLD = 0.8;  // BBH loop, M and s
+  var LOOP_T0 = 650, LOOP_T1 = 850, NR_SPEED = 90;  // BBH loop (M) and speed (M/s)
   var SC_BBH = 11;          // px per M for the BBH at the source
   var EARTH_R = 60;         // px, Earth radius at the lens distance
   var BAND_RED = [205, 55, 40];
@@ -313,11 +314,10 @@
 
   // Source clock: seconds since emission started -> NR time (loops with a hold). A loop
   // restarts only after the previous pulse has reached the Earth on every path: stage 1
-  // waits for the lower path (TRAVEL + DELAY), stage 3 for the one path; stages 4-5 have
-  // no waves and use the short loop.
+  // waits for the lower path (TRAVEL + DELAY), stage 3 for the one path.
   var EMIT = (LOOP_T1 - LOOP_T0) / NR_SPEED;
-  var PER_1 = EMIT + TRAVEL + DELAY + 0.3, PER_3 = EMIT + TRAVEL + 0.3, PER_BBH = EMIT + LOOP_HOLD;
-  var period = PER_1, pending = null;    // pending: {period, at (ms)}, a switch at a loop boundary
+  var PER_1 = EMIT + TRAVEL + DELAY + 0.3, PER_3 = EMIT + TRAVEL + 0.3;
+  var period = PER_1;
   function nrTime(sec) { var e = sec % period; return Math.min(LOOP_T1, LOOP_T0 + NR_SPEED * e); }
   var HL_MAX = Math.max.apply(null, WV.hL.map(Math.abs));
   // Strain and envelope emitted `sec` seconds after the clock start; lensed if L.
@@ -525,7 +525,6 @@
   }
 
   function frame(now) {
-    if (pending && now >= pending.at) { clock = pending.at; period = pending.period; pending = null; }
     var k = fit(scene), ctx = scene.getContext("2d");
     ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.clearRect(0, 0, 1920, 1080);
@@ -621,18 +620,13 @@
     step: function (slide, k, dir) {
       var now = performance.now(), inst = dir < 0;
       // source clock: waves start from the source on entering stages 1 and 3; the BBH
-      // stops in stage 2
-      var per = k === 1 ? PER_1 : k === 3 ? PER_3 : PER_BBH;
-      if (k === 0) { clock = null; freezeT = null; period = PER_1; pending = null; }
-      else if (k === 2) { freezeT = inst ? LOOP_T0 : srcTime(now); pending = null; }
+      // stops in stage 2 and shows its first frame (LOOP_T0), still, in stages 4-5
+      if (k === 0) { clock = null; freezeT = null; period = PER_1; }
+      else if (k === 2) { freezeT = inst ? LOOP_T0 : srcTime(now); }
+      else if (k >= 4) { freezeT = LOOP_T0; }
       else {
-        freezeT = null;
-        if (inst || k === 1 || k === 3 || clock === null) {
-          period = per; pending = null; clock = inst ? now - 20000 : now;
-        } else if (per !== period && !pending) {
-          // finish the running loop (its pulse still travelling), then switch
-          pending = { period: per, at: clock + (Math.floor((now - clock) / 1000 / period) + 1) * period * 1000 };
-        }
+        freezeT = null; period = k === 1 ? PER_1 : PER_3;
+        clock = inst ? now - 20000 : now;
       }
       set(p.light, k === 0 ? 1 : 0, now, inst, 900);
       set(p.bbh, k >= 1 && k <= 5 ? 1 : 0, now, inst, 900);
