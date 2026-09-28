@@ -11,3 +11,13 @@
 #qnm-amp-3d-canvas { cursor: grab; }
 #qnm-amp-3d-canvas.qnm-amp-drag { cursor: grabbing; }
 
+
+/* "NR simulations" label, gold, top left. */
+.qnm-amp-nr {
+  position: absolute;
+  top: 30px;
+  left: 50px;
+  color: #c9a000;
+  font-size: 40px;
+  font-weight: bold;
+}

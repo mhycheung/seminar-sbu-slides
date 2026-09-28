@@ -51,3 +51,16 @@
   bottom: 15px;
   white-space: nowrap;
 }
+
+/* "NR simulations" label, gold, top left. */
+.qnm-fit-nr {
+  position: absolute;
+  top: 30px;
+  left: 50px;
+  color: #c9a000;
+  font-size: 40px;
+  font-weight: bold;
+}
+
+/* Clear the "NR simulations" label. */
+#qnm-fit-waveform > h1.title { top: 100px; }
