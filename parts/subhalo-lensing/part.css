@@ -1,0 +1,12 @@
+.subhalo-lensing-full {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.subhalo-lensing-bbh {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+}
