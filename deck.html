@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>deck</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="common/deck.css">
+<link rel="stylesheet" href="parts/title/part.css">
+<link rel="stylesheet" href="parts/preface/part.css">
+<link rel="stylesheet" href="parts/gw-ring/part.css">
+<link rel="stylesheet" href="parts/ringdown/part.css">
+<link rel="stylesheet" href="parts/qnm-fit/part.css">
+<link rel="stylesheet" href="parts/qnm-amp/part.css">
+<link rel="stylesheet" href="parts/rd-real/part.css">
+<link rel="stylesheet" href="parts/gw-lensing/part.css">
+<link rel="stylesheet" href="parts/gw231123-lensing/part.css">
+<link rel="stylesheet" href="parts/subhalo-lensing/part.css">
+<link rel="stylesheet" href="parts/conclusions/part.css">
+</head>
+<body>
+<div class="deck">
+<!-- part: title -->
+<section class="slide" id="title-slide">
+  <div class="title-talk">Testing General Relativity and Informing Astrophysics<br>with Gravitational Waves</div>
+  <div class="title-speaker">Mark Ho-Yeuk Cheung</div>
+  <div class="title-event">29 September 2026<br>Stony Brook University</div>
+  <div class="title-logos">
+    <img class="title-logo-ias" src="parts/title/assets/ias_logo.svg" alt="Institute for Advanced Study">
+    <img class="title-logo-croucher" src="parts/title/assets/croucher_logo.svg" alt="Croucher Foundation">
+  </div>
+</section>
+<!-- part: preface -->
+<section class="slide" id="preface-slide">
+  <div class="preface-lines">
+    <p>I will show a lot of <span class="preface-ongoing">ongoing work</span></p>
+    <p>open science framework: <a class="preface-link" data-url="https://github.com/mhycheung/open-science" target="_blank">https://github.com/mhycheung/open-science</a></p>
+  </div>
+</section>
+<!-- part: gw-ring -->
+<section class="slide" id="gw-ring-binary">
+  <canvas id="gw-ring-canvas" class="gw-ring-canvas" width="3840" height="2160"></canvas>
+</section>
+
+<section class="slide" id="gw-ring-ligo">
+  <canvas id="gw-ring-ligo-canvas" class="gw-ring-canvas" width="3840" height="2160"></canvas>
+</section>
+<!-- part: ringdown -->
+<script src="parts/ringdown/assets/ringdown-data.js"></script>
+<script src="parts/ringdown/assets/ringdown-title-data.js"></script>
+<section class="slide" id="ringdown-title">
+  <h1 class="title">Black Hole Ringdown</h1>
+  <canvas id="ringdown-title-wave" class="ringdown-title-wave"></canvas>
+  <div class="ringdown-title-cite"><span class="cite">Berti, ..., <u>Cheung</u>+ (2505.23895)</span></div>
+</section>
+
+<section class="slide" id="ringdown-merger">
+  <canvas id="ringdown-canvas" class="ringdown-canvas ringdown-soft-left" width="960" height="1080"></canvas>
+  <canvas id="ringdown-ring" class="ringdown-canvas ringdown-right" width="900" height="900"></canvas>
+</section>
+
+<section class="slide" id="ringdown-quad">
+  <canvas id="ringdown-quad-left" class="ringdown-canvas ringdown-soft-left" width="960" height="1080"></canvas>
+  <canvas id="ringdown-quad-right" class="ringdown-canvas ringdown-quad-right" width="1920" height="1080"></canvas>
+  <div id="ringdown-quad-approx" class="ringdown-fade ringdown-op ringdown-quad-approx">$\approx$</div>
+  <div id="ringdown-quad-lm" class="ringdown-fade ringdown-lm ringdown-quad-lm">$\ell m = 22$</div>
+  <div id="ringdown-eht" class="ringdown-fade ringdown-eht">
+    <img class="ringdown-eht-img" src="parts/ringdown/assets/eht_m87_800.jpg" alt="">
+    <div class="ringdown-cite"><span class="cite">EHT (1906.11238)</span><span class="cite">Cardoso+ (0812.1806)</span></div>
+  </div>
+  <div id="ringdown-quad-wave" class="ringdown-fade ringdown-plane-box ringdown-quad-wave"></div>
+  <div id="ringdown-quad-plane" class="ringdown-fade ringdown-plane-box ringdown-quad-plane"></div>
+</section>
+
+<section class="slide" id="ringdown-sum">
+  <canvas id="ringdown-sum-full" class="ringdown-sum-full" width="520" height="520"></canvas>
+  <div id="ringdown-sum-terms" class="ringdown-fade">
+    <div class="ringdown-op" style="left: 510px;">$=$</div>
+    <canvas id="ringdown-sum-22" class="ringdown-mode" style="left: 410px;" width="600" height="600"></canvas>
+    <div class="ringdown-lm ringdown-sum-lm" style="left: 710px;">$\ell m = 22$</div>
+  </div>
+  <div id="ringdown-sum-more" class="ringdown-fade">
+    <div class="ringdown-op" style="left: 900px;">$+$</div>
+    <canvas id="ringdown-sum-33" class="ringdown-mode" style="left: 790px;" width="600" height="600"></canvas>
+    <div class="ringdown-op" style="left: 1280px;">$+$</div>
+    <canvas id="ringdown-sum-44" class="ringdown-mode" style="left: 1170px;" width="600" height="600"></canvas>
+    <div class="ringdown-op" style="left: 1720px;">$+ \cdots$</div>
+    <div class="ringdown-lm ringdown-sum-lm" style="left: 1090px;">$\ell m = 33$</div>
+    <div class="ringdown-lm ringdown-sum-lm" style="left: 1470px;">$\ell m = 44$</div>
+  </div>
+  <div id="ringdown-sum-plane" class="ringdown-fade ringdown-plane-box ringdown-sum-plane">
+    <div class="ringdown-plane-cite"><span class="cite">Berti, ..., <u>Cheung</u>+ (2505.23895)</span></div>
+  </div>
+</section>
+<!-- part: qnm-fit -->
+<script src="parts/qnm-fit/assets/qnm-fit-data.js"></script>
+<script src="parts/qnm-fit/assets/qnm-fit-many.js"></script>
+<section class="slide" id="qnm-fit-waveform">
+  <div class="qnm-fit-nr">NR simulations</div>
+  <h1 class="title">What quasi-normal modes are excited in the ringdown?</h1>
+  <canvas id="qnm-fit-wave-canvas" class="qnm-fit-canvas" style="left:140px; top:230px; width:1680px; height:700px"></canvas>
+  <div class="qnm-fit-label" style="left:980px; top:990px">$t / M_f$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:130px; top:580px">$\mathrm{Re}\, h_{22}$</div>
+  <div class="qnm-fit-cite"><span class="cite">Boyle+ (1904.04831)</span></div>
+</section>
+
+<section class="slide" id="qnm-fit-sweep">
+  <div class="qnm-fit-nr">NR simulations</div>
+  <canvas id="qnm-fit-sweep-left" class="qnm-fit-canvas qnm-fit-left" style="left:150px; top:140px; width:880px; height:760px"></canvas>
+  <canvas id="qnm-fit-sweep-right" class="qnm-fit-canvas qnm-fit-right" style="left:1150px; top:140px; width:720px; height:760px"></canvas>
+  <div class="qnm-fit-label" style="left:590px; top:960px">$t / M_f$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:150px; top:520px">$\mathrm{Re}\, h_{22}$</div>
+  <div class="qnm-fit-label" style="left:1510px; top:960px">$M_f\, \omega_r$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:1100px; top:520px">$-M_f\, \omega_i$</div>
+  <div class="qnm-fit-t0"></div>
+  <div class="qnm-fit-q qnm-fit-q220">$\omega_{220}$</div>
+  <div class="qnm-fit-cite"><span class="cite">Baibhav, <u>Cheung</u>+ (2302.03050)</span>&nbsp;&nbsp;&nbsp;<span class="cite"><u>Cheung</u>+ (2310.04489)</span></div>
+</section>
+
+<section class="slide" id="qnm-fit-sweep2">
+  <div class="qnm-fit-nr">NR simulations</div>
+  <canvas id="qnm-fit-sweep2-left" class="qnm-fit-canvas qnm-fit-left" style="left:150px; top:140px; width:880px; height:760px"></canvas>
+  <canvas id="qnm-fit-sweep2-right" class="qnm-fit-canvas qnm-fit-right" style="left:1150px; top:140px; width:720px; height:760px"></canvas>
+  <div class="qnm-fit-label" style="left:590px; top:960px">$t / M_f$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:150px; top:520px">$\mathrm{Re}\, h_{22}$</div>
+  <div class="qnm-fit-label" style="left:1510px; top:960px">$M_f\, \omega_r$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:1100px; top:520px">$-M_f\, \omega_i$</div>
+  <div class="qnm-fit-t0"></div>
+  <div class="qnm-fit-q qnm-fit-q220">$\omega_{220}$</div>
+  <div class="qnm-fit-q qnm-fit-q221">$\omega_{221}$</div>
+  <div class="qnm-fit-cite"><span class="cite">Baibhav, <u>Cheung</u>+ (2302.03050)</span>&nbsp;&nbsp;&nbsp;<span class="cite"><u>Cheung</u>+ (2310.04489)</span></div>
+</section>
+
+<section class="slide" id="qnm-fit-many22">
+  <div class="qnm-fit-nr">NR simulations</div>
+  <canvas id="qnm-fit-many22-plane" class="qnm-fit-canvas qnm-fit-plane" style="left:260px; top:170px; width:1400px; height:780px"></canvas>
+  <div class="qnm-fit-label" style="left:1015px; top:1010px">$M_f\, \omega_r$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:250px; top:530px">$-M_f\, \omega_i$</div>
+  <div class="qnm-fit-t0 qnm-fit-t0-plane"></div>
+  <div class="qnm-fit-q qnm-fit-target">$\omega_{r220}$</div>
+  <div class="qnm-fit-cite"><span class="cite"><u>Cheung</u>+ (2310.04489)</span></div>
+</section>
+
+<section class="slide" id="qnm-fit-many44">
+  <div class="qnm-fit-nr">NR simulations</div>
+  <h1 class="title">$(\ell, m) = (4, 4)$</h1>
+  <canvas id="qnm-fit-many44-plane" class="qnm-fit-canvas qnm-fit-plane" style="left:260px; top:170px; width:1400px; height:780px"></canvas>
+  <div class="qnm-fit-label" style="left:1015px; top:1010px">$M_f\, \omega_r$</div>
+  <div class="qnm-fit-label qnm-fit-ylabel" style="left:250px; top:530px">$-M_f\, \omega_i$</div>
+  <div class="qnm-fit-t0 qnm-fit-t0-plane"></div>
+  <div class="qnm-fit-q qnm-fit-target">$\omega_{220 \times 220}$</div>
+  <div class="qnm-fit-cite"><span class="cite"><u>Cheung</u>+ (2310.04489)</span></div>
+</section>
+<!-- part: qnm-amp -->
+<script src="parts/qnm-amp/assets/qnm-amp-data.js"></script>
+<section class="slide" id="qnm-amp-3d">
+  <div class="qnm-amp-nr">NR simulations</div>
+  <canvas id="qnm-amp-3d-canvas" class="qnm-amp-abs" style="left:120px; top:20px; width:1400px; height:1040px"></canvas>
+  <div class="qnm-amp-axlabel qnm-amp-ax-q">$q$</div>
+  <div class="qnm-amp-axlabel qnm-amp-ax-chip">$\chi_{\rm eff}$</div>
+  <div class="qnm-amp-axlabel qnm-amp-ax-chim">$\chi_-$</div>
+  <canvas id="qnm-amp-3d-cbar" class="qnm-amp-abs" style="left:1600px; top:240px; width:200px; height:600px"></canvas>
+  <div class="qnm-amp-axlabel" style="left:1700px; top:190px">$A_{220}$</div>
+  <span class="cite qnm-amp-abs" style="right:60px; bottom:30px"><u>Cheung</u>+ (2310.04489)</span>
+</section>
+
+<section class="slide" id="qnm-amp-corner">
+  <div class="qnm-amp-nr">NR simulations</div>
+  <div class="ongoing">ongoing work</div>
+  <img class="qnm-amp-abs" src="parts/qnm-amp/assets/qnm-amp-corner.png" style="left:396px; top:20px; height:1040px">
+</section>
+
+<section class="slide" id="qnm-amp-quad">
+  <div class="qnm-amp-nr">NR simulations</div>
+  <img class="qnm-amp-abs" src="parts/qnm-amp/assets/qnm-amp-quad.png" style="left:210px; top:30px; width:1500px">
+  <span class="cite qnm-amp-abs" style="right:210px; top:990px"><u>Cheung</u>+ (2310.04489)</span>
+</section>
+
+<section class="slide" id="qnm-amp-sgb">
+  <div class="ongoing">ongoing work</div>
+  <h1 class="title">Quadratic ratio in sGB gravity</h1>
+  <img class="qnm-amp-abs" src="parts/qnm-amp/assets/qnm-amp-sgb.png" style="left:60px; top:170px; width:1800px">
+</section>
+<!-- part: rd-real -->
+<script src="parts/rd-real/assets/rd-real-data.js"></script>
+<section class="slide" id="rd-real-carullo">
+  <h1 class="title">GW150914</h1>
+  <div class="rd-real-kind">real data</div>
+  <figure class="rd-real-fig" style="left:150px; top:150px; width:835px">
+    <img src="parts/rd-real/assets/carullo_fig4_waveform.png" alt="">
+    <span class="cite">Carullo+ (1902.07527)</span>
+  </figure>
+  <figure class="rd-real-fig" style="left:1040px; top:150px; width:800px">
+    <img src="parts/rd-real/assets/carullo_fig3_spectroscopy.png" alt="">
+    <span class="cite">Carullo+ (1902.07527)</span>
+  </figure>
+</section>
+
+<section class="slide" id="rd-real-gwtc5">
+  <h1 class="title">GWTC-5</h1>
+  <div class="rd-real-kind">real data</div>
+  <figure class="rd-real-fig" style="left:360px; top:140px; width:1200px">
+    <img src="parts/rd-real/assets/gwtc5_fig6_rd_mchi.png" alt="">
+    <span class="cite">LVK (2607.19293)</span>
+  </figure>
+  <p class="rd-real-count">~50 events with a clear ringdown analyzed</p>
+</section>
+
+<section class="slide" id="rd-real-gw250114-lvk">
+  <h1 class="title">GW250114</h1>
+  <div class="rd-real-kind">real data</div>
+  <figure class="rd-real-fig" style="left:60px; top:170px; width:993px">
+    <img src="parts/rd-real/assets/gw250114_fig1_221_over_time.png" alt="">
+    <span class="cite">LVK (2509.08099)</span>
+  </figure>
+  <figure class="rd-real-fig" style="left:1080px; top:170px; width:788px">
+    <img src="parts/rd-real/assets/gw250114_fig2_freq_tau.png" alt="">
+    <span class="cite">LVK (2509.08099)</span>
+  </figure>
+</section>
+
+<section class="slide" id="rd-real-silencio">
+  <h1 class="title">A new code for ringdown data analysis: Silencio</h1>
+  <div class="rd-real-kind">real data</div>
+  <div class="ongoing">ongoing work</div>
+  <div class="rd-real-collab">(in collaboration with Jaime Redondo-Yuste)</div>
+  <ul class="rd-real-bullets">
+    <li>All frequencies are free in the analysis</li>
+    <li>All modes have the same prior</li>
+    <li>The sky location is not fixed</li>
+    <li>The polarization of each free-frequency mode is not fixed to circular</li>
+    <li>Look at the results here: <a class="rd-real-results" data-url="https://mhycheung.github.io/silencio-results/" target="_blank">https://mhycheung.github.io/silencio-results/</a></li>
+  </ul>
+</section>
+
+<section class="slide rd-real-anim" id="rd-real-hottake" data-rd-real="gw250114-n2">
+  <h1 class="title">GW250114</h1>
+  <div class="rd-real-kind">real data</div>
+  <div class="ongoing">ongoing work</div>
+</section>
+
+<section class="slide" id="rd-real-siegel">
+  <h1 class="title">GW231123</h1>
+  <div class="rd-real-kind">real data</div>
+  <figure class="rd-real-fig" style="left:60px; top:170px; width:1064px">
+    <img src="parts/rd-real/assets/siegel_fig1_loo.png" alt="">
+    <span class="cite">Siegel+ (2511.02691)</span>
+  </figure>
+  <figure class="rd-real-fig" style="left:1150px; top:170px; width:716px">
+    <img src="parts/rd-real/assets/siegel_fig2_fgamma.png" alt="">
+    <span class="cite">Siegel+ (2511.02691)</span>
+  </figure>
+</section>
+
+<section class="slide rd-real-anim" id="rd-real-gw231123-n2" data-rd-real="gw231123-n2">
+  <h1 class="title">GW231123</h1>
+  <div class="rd-real-kind">real data</div>
+  <div class="ongoing">ongoing work</div>
+</section>
+
+<section class="slide rd-real-anim" id="rd-real-gw231123-n3" data-rd-real="gw231123-n3">
+  <h1 class="title">GW231123</h1>
+  <div class="rd-real-kind">real data</div>
+  <div class="ongoing">ongoing work</div>
+</section>
+
+<section class="slide rd-real-anim" id="rd-real-3g-n3" data-rd-real="3g-n3">
+  <h1 class="title">GW250114-like injection, CE + ET</h1>
+  <div class="rd-real-kind">simulated data</div>
+  <div class="ongoing">ongoing work</div>
+</section>
+
+<section class="slide rd-real-anim" id="rd-real-3g-n4" data-rd-real="3g-n4">
+  <h1 class="title">GW250114-like injection, CE + ET</h1>
+  <div class="rd-real-kind">simulated data</div>
+  <div class="ongoing">ongoing work</div>
+</section>
+<!-- part: gw-lensing -->
+<script src="parts/gw-lensing/assets/gw-lensing-data.js"></script>
+<section class="slide" id="gw-lensing-title">
+  <div class="gw-lensing-bigtitle">Gravitational Wave Diffraction Lensing</div>
+</section>
+
+<section class="slide" id="gw-lensing-main">
+  <canvas id="gw-lensing-scene" class="gw-lensing-full" width="1920" height="1080"></canvas>
+  <canvas id="gw-lensing-bbh" class="gw-lensing-bbh" width="260" height="260"></canvas>
+  <div id="gw-lensing-labels"></div>
+  <div id="gw-lensing-cite-plot" class="gw-lensing-cite gw-lensing-hide"><span class="cite">Villarrubia-Rojo+ (2409.04606)</span>&nbsp;&nbsp;&nbsp;<span class="cite"><u>Cheung</u>+ (2403.13876)</span></div>
+</section>
+<!-- part: gw231123-lensing -->
+<script src="parts/gw231123-lensing/assets/gw231123-lensing-data.js"></script>
+<section class="slide" id="gw231123-lensing-event">
+  <figure class="gw231123-lensing-fig" style="left:15px; top:280px; width:465px">
+    <img src="parts/gw231123-lensing/assets/news_gizmodo_block.png" alt="">
+    <span class="cite">Gizmodo (13 Jul 2025)</span>
+  </figure>
+  <figure class="gw231123-lensing-fig" style="left:500px; top:150px; width:700px">
+    <img src="parts/gw231123-lensing/assets/lvk_fig3_m1m2.png" alt="">
+    <span class="cite">LVK (2507.08219)</span>
+  </figure>
+  <figure class="gw231123-lensing-fig" style="left:1210px; top:150px; width:700px">
+    <img src="parts/gw231123-lensing/assets/lvk_fig4_a1a2.png" alt="">
+    <span class="cite">LVK (2507.08219)</span>
+  </figure>
+</section>
+
+<section class="slide gw231123-lensing-wave" id="gw231123-lensing-wave">
+  <h1 class="title gw231123-lensing-wtitle"></h1>
+  <div class="gw231123-lensing-wave-cite"><span class="cite"><u>Cheung</u>+ (2607.21834)</span></div>
+</section>
+
+<section class="slide" id="gw231123-lensing-lens">
+  <figure class="gw231123-lensing-fig" style="left:520px; top:40px; width:880px">
+    <img src="parts/gw231123-lensing/assets/cheung_fig1_yMLz.png" alt="">
+    <span class="cite"><u>Cheung</u>+ (2607.21834)</span>
+  </figure>
+</section>
+
+<section class="slide" id="gw231123-lensing-source">
+  <figure class="gw231123-lensing-fig" style="left:150px; top:5px; width:790px">
+    <img src="parts/gw231123-lensing/assets/cheung_fig2_m1m2.png" alt="">
+  </figure>
+  <figure class="gw231123-lensing-fig" style="left:980px; top:5px; width:790px">
+    <img src="parts/gw231123-lensing/assets/cheung_fig2_a1a2.png" alt="">
+  </figure>
+  <div class="gw231123-lensing-side-cite" style="left:30px; top:805px"><span class="cite"><u>Cheung</u>+ (2607.21834)</span></div>
+  <div class="gw231123-lensing-tablebox" style="top:825px">
+  <table class="gw231123-lensing-table">
+    <tr><th>$\log_{10}\mathcal{B}^{\rm L}_{\rm unL}$</th><th>PM</th><th>gSIS</th><th>CIS</th></tr>
+    <tr><td>uninformative</td><td>$3.17^{+0.14}_{-0.09}$</td><td>$2.98^{+0.10}_{-0.13}$</td><td>$2.04^{+0.12}_{-0.11}$</td></tr>
+    <tr><td>GWTC-5</td><td>$5.41^{+0.34}_{-0.47}$</td><td>$5.84^{+0.63}_{-0.41}$</td><td>$5.38^{+0.59}_{-0.50}$</td></tr>
+  </table>
+  </div>
+  <div class="gw231123-lensing-nsf" data-step="1" style="left:1490px; top:930px">...not so fast</div>
+</section>
+
+<section class="slide gw231123-lensing-bayes" id="gw231123-lensing-bayes">
+  <h1 class="title">Bayes factor<span class="gw231123-lensing-odds-title"> $\Rightarrow$ posterior odds</span></h1>
+  <div class="gw231123-lensing-formula">
+    <span class="gw231123-lensing-lhs"><span class="gw231123-lensing-lhs-b">$\mathcal{B}^{\rm L}_{\rm unL}$</span><span class="gw231123-lensing-lhs-o">$\mathcal{O}^{\rm L}_{\rm unL}$</span></span>
+    <span>$= \dfrac{P(d\mid{\rm L})}{P(d\mid{\rm unL})}$</span>
+    <span class="gw231123-lensing-prior"><span>$\,\dfrac{P({\rm L})}{P({\rm unL})}$</span></span>
+  </div>
+  <div class="gw231123-lensing-question" data-step="2">How likely is this event lensed a priori?</div>
+</section>
+
+<section class="slide" id="gw231123-lensing-tau">
+  <h1 class="title">The predicted optical depth</h1>
+  <figure class="gw231123-lensing-fig" style="left:15px; top:125px; width:890px">
+    <img src="parts/gw231123-lensing/assets/cheung_fig7_tau.png" alt="">
+  </figure>
+  <div class="gw231123-lensing-tablebox gw231123-lensing-tableright" style="top:300px">
+  <table class="gw231123-lensing-table">
+    <tr><th>$\log_{10}\mathcal{O}^{\rm L}_{\rm unL}$</th><th>PM</th><th>gSIS</th><th>CIS</th></tr>
+    <tr><td>uninformative</td><td>$3.17^{+0.14}_{-0.09}$</td><td>$2.98^{+0.10}_{-0.13}$</td><td>$2.04^{+0.12}_{-0.11}$</td></tr>
+    <tr><td>GWTC-5</td><td>$5.41^{+0.34}_{-0.47}$</td><td>$5.84^{+0.63}_{-0.41}$</td><td>$5.38^{+0.59}_{-0.50}$</td></tr>
+    <tr><td>GWTC-5 +<br>optical depth</td><td>$-5.12^{+0.37}_{-0.45}$</td><td>$0.24^{+0.54}_{-0.37}$</td><td>$-0.29^{+0.49}_{-0.41}$</td></tr>
+  </table>
+  </div>
+  <div class="gw231123-lensing-nsf" data-step="1" style="left:1330px; top:740px">...not so fast</div>
+  <div class="gw231123-lensing-side-cite" style="right:40px; top:1000px"><span class="cite"><u>Cheung</u>+ (2607.21834)</span></div>
+</section>
+
+<section class="slide" id="gw231123-lensing-pop">
+  <h1 class="title">Does GW231123 have the parameters we expect, if lensed?</h1>
+  <figure class="gw231123-lensing-fig" style="left:110px; top:150px; width:1700px">
+    <img src="parts/gw231123-lensing/assets/cheung_fig9_pop.png" alt="">
+    <span class="cite"><u>Cheung</u>+ (2607.21834)</span>
+  </figure>
+</section>
+
+<section class="slide" id="gw231123-lensing-freq">
+  <div class="gw231123-lensing-tablebox" style="top:300px">
+  <table class="gw231123-lensing-table">
+    <tr><th>$\log_{10}\mathcal{O}^{\rm L}_{\rm unL}$</th><th>PM</th><th>gSIS</th><th>CIS</th></tr>
+    <tr><td>uninformative</td><td>$3.17^{+0.14}_{-0.09}$</td><td>$2.98^{+0.10}_{-0.13}$</td><td>$2.04^{+0.12}_{-0.11}$</td></tr>
+    <tr><td>GWTC-5</td><td>$5.41^{+0.34}_{-0.47}$</td><td>$5.84^{+0.63}_{-0.41}$</td><td>$5.38^{+0.59}_{-0.50}$</td></tr>
+    <tr><td>GWTC-5 + optical depth</td><td>$-5.12^{+0.37}_{-0.45}$</td><td>$0.24^{+0.54}_{-0.37}$</td><td>$-0.29^{+0.49}_{-0.41}$</td></tr>
+    <tr class="gw231123-lensing-rule"><td>frequentist probability $\log_{10} p$</td><td>$-10.08^{+1.03}_{-1.14}$</td><td>$-4.05^{+0.67}_{-1.15}$</td><td>$-4.07^{+0.45}_{-0.89}$</td></tr>
+  </table>
+  </div>
+  <div class="gw231123-lensing-freq-cite"><span class="cite"><u>Cheung</u>+ (2607.21834)</span></div>
+</section>
+<!-- part: subhalo-lensing -->
+<script src="parts/subhalo-lensing/assets/subhalo-lensing-data.js"></script>
+<section class="slide" id="subhalo-lensing-main">
+  <h1 class="title">Embedded lensing</h1>
+  <canvas id="subhalo-lensing-scene" class="subhalo-lensing-full" width="1920" height="1080"></canvas>
+  <canvas id="subhalo-lensing-bbh" class="subhalo-lensing-bbh" width="260" height="260"></canvas>
+</section>
+
+<section class="slide" id="subhalo-lensing-goyal">
+  <h1 class="title">Embedded lensing interpretation of GW231123</h1>
+  <figure class="subhalo-lensing-fig" style="left:40px; top:210px; width:920px">
+    <img src="parts/subhalo-lensing/assets/goyal_l1_fit_decomposition.png" alt="">
+    <span class="cite">Goyal+ (2512.17631)</span>
+  </figure>
+  <figure class="subhalo-lensing-fig" style="left:1040px; top:150px; width:800px">
+    <img src="parts/subhalo-lensing/assets/goyal_source_posteriors_legend.png" alt="">
+    <img src="parts/subhalo-lensing/assets/goyal_source_posteriors.png" alt="" style="width:600px; margin:8px auto 0">
+    <table class="subhalo-lensing-bf">
+      <tr><td></td><td>NRSur</td><td>Phenom</td><td>SEOBNR</td></tr>
+      <tr><td>$\log_{10}\mathcal{B}^{L}_{U}$</td><td>2.82</td><td>5.0</td><td>1.24</td></tr>
+    </table>
+    <span class="cite">Goyal+ (2512.17631)</span>
+  </figure>
+</section>
+
+<section class="slide" id="subhalo-lensing-rates">
+  <div class="ongoing">ongoing work</div>
+  <h1 class="title">Rates of embedded lensing</h1>
+  <figure class="subhalo-lensing-fig" style="left:90px; top:150px; width:600px">
+    <img src="parts/subhalo-lensing/assets/vujeva_fig3_lensing_rates.png" alt="">
+    <span class="cite">Vujeva+ (2608.07667)</span>
+  </figure>
+  <figure class="subhalo-lensing-fig" style="left:790px; top:150px; width:1040px">
+    <img src="parts/subhalo-lensing/assets/cheng_compound_lensing_probability.png" alt="">
+  </figure>
+  <div class="subhalo-lensing-credit">work led by April Cheng (student at Princeton)</div>
+</section>
+<!-- part: conclusions -->
+<section class="slide" id="conclusions-slide">
+  <h1 class="title">Conclusions</h1>
+  <ul class="conclusions-bullets">
+    <li>Gravitational waves are a unique probe of fundamental physics and astrophysics</li>
+    <li>Gravity &rarr; Gravity + Gravity
+      <ul>
+        <li>black hole ringdown</li>
+        <li>gravitational wave diffraction lensing</li>
+      </ul>
+    </li>
+    <li>Exciting days ahead!
+      <ul>
+        <li>O4c data release in December</li>
+        <li>next generation detectors (CE, ET, LISA)</li>
+      </ul>
+    </li>
+  </ul>
+</section>
+<div class="deck-progress"><div class="deck-progress-fill"></div></div>
+<div class="deck-clock"></div>
+</div>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/auto-render.min.js"></script>
+<script src="common/deck.js"></script>
+<script src="parts/preface/part.js"></script>
+<script src="parts/gw-ring/part.js"></script>
+<script src="parts/ringdown/part.js"></script>
+<script src="parts/qnm-fit/part.js"></script>
+<script src="parts/qnm-amp/part.js"></script>
+<script src="parts/rd-real/part.js"></script>
+<script src="parts/gw-lensing/part.js"></script>
+<script src="parts/gw231123-lensing/part.js"></script>
+<script src="parts/subhalo-lensing/part.js"></script>
+<script>Deck.start();</script>
+</body>
+</html>

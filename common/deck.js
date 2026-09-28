@@ -47,6 +47,16 @@
     }
     s = step;
     showStep(cur, s, dir);
+    var bar = deckEl.querySelector(".deck-progress-fill");
+    if (bar) bar.style.width = (100 * (cur + 1) / slides.length) + "%";
+  }
+
+  // Time of day, bottom left; present only in the stitched deck.
+  function tick() {
+    var el = deckEl.querySelector(".deck-clock");
+    if (!el) return;
+    var d = new Date();
+    el.textContent = d.getHours() + ":" + ("0" + d.getMinutes()).slice(-2);
   }
 
   function next() {
@@ -94,6 +104,8 @@
       return Math.max(m, (w && w.steps) || 0);
     });
     fit();
+    tick();
+    if (deckEl.querySelector(".deck-clock")) setInterval(tick, 5000);
     window.addEventListener("resize", fit);
     window.addEventListener("keydown", onKey, true);
     window.addEventListener("keyup", onKey, true);
