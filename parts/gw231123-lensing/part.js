@@ -27,7 +27,7 @@
   var YLIM = D.ylim || { L1: [-5.5, 4.5], H1: [-4.5, 5.5] };                        // Fig. 3
   var PANEL = { L: 250, R: 1830 };
   var ROWS = { T: 140, B: 540 };           // upper half, below the title: the stacked components
-  var LOW = { T: 590, B: 960 };            // Livingston panel
+  var LOW = { T: 560, B: 930 };            // Livingston panel; its axis label clears the progress bar
   var HIGH = { T: 95, B: 465 };            // Hanford panel (stage 8)
   var MERGE_MS = 1600;
   // Title of slide 2 at each stage: the model on screen (none at stage 0 and at the end, stage 8).
@@ -175,7 +175,7 @@
       sl.appendChild(d);
       return d;
     }
-    label("t - t_{\\rm event}\\ [\\mathrm{ms}]", (PANEL.L + PANEL.R) / 2, LOW.B + 88);
+    label("t - t_{\\rm event}\\ [\\mathrm{ms}]", (PANEL.L + PANEL.R) / 2, LOW.B + 72);
     function textLabel(txt, x, y) {
       var d = document.createElement("div");
       d.className = "gw231123-lensing-label gw231123-lensing-ylabel";

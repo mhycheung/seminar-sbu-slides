@@ -235,8 +235,7 @@
 
   // Photo: source crop (0, 380)-(2400, 1600) px drawn at 0.8 scale, mirrored left-right,
   // into slide rows 52-1028. Arm positions below were read by eye on the photo, slide px.
-  var photo = new Image();
-  photo.src = "parts/gw-ring/assets/ligo_hanford_aerial.jpg";
+  var photo = document.getElementById("gw-ring-photo");   // an <img> in part.html, so that a saved page keeps it
   var ARM_UP = [[345, 775], [1085, 268]];        // arm towards the upper right, full length
   var ARM_RIGHT = [[400, 832], [1920, 888]];     // arm to the right, leaves the photo
   // Camera on the detector. The detector is a rigid L on the ground: arms along ground x

@@ -420,8 +420,7 @@
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 2 * Math.PI); ctx.fill();
   }
-  var earthImg = new Image();
-  earthImg.src = "parts/gw-lensing/assets/earth_apollo17_400.png";
+  var earthImg = document.getElementById("gw-lensing-earth");   // an <img> in part.html, so that a saved page keeps it
   function drawEarth(ctx, cam, op) {
     if (op <= 0 || !earthImg.complete || !earthImg.naturalWidth) return;
     var q = proj(cam, EARTH), r = EARTH_R * q[2];
