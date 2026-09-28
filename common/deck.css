@@ -56,8 +56,20 @@ html, body {
   color: inherit;
 }
 
-/* Source of a figure from another paper: "Cheung+ (2401.12345)", "LVK (2111.03606)". */
+/* Source of a figure from another paper: "Cheung+ (2401.12345)", "LVK (2111.03606)".
+   Same size as body text. */
 .cite {
   color: #808080;
-  font-size: 24px;
+  font-size: 40px;
+}
+
+/* Label on a slide that shows ongoing work: bold red "ongoing work", top right. */
+.ongoing {
+  position: absolute;
+  top: 30px;
+  right: 50px;
+  margin: 0;
+  color: #d00000;
+  font-size: 40px;
+  font-weight: bold;
 }
