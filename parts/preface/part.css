@@ -17,3 +17,8 @@
   color: #d00000;
   font-weight: bold;
 }
+
+.preface-link {
+  color: #0645ad;
+  white-space: nowrap;
+}

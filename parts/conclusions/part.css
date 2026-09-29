@@ -20,3 +20,16 @@
 .conclusions-bullets ul li {
   margin-bottom: 12px;
 }
+
+.conclusions-slides-link {
+  position: absolute;
+  left: 220px;
+  bottom: 90px;
+  margin: 0;
+  font-size: 40px;
+}
+
+.conclusions-link {
+  color: #0645ad;
+  white-space: nowrap;
+}
