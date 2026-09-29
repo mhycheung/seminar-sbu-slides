@@ -15,6 +15,8 @@
 // which then turns into an upright L (left) while a ring of test masses appears (right);
 // the wave passes: ring and detector deform together, and the detector response h_+(t)
 // is traced at the bottom.
+// Third slide (gw-ring-merger), stages 0-1: NR binary (left), ring (right) and waveform
+// (bottom) on one clock; stage 1 plays through merger and ringdown once.
 (function () {
   "use strict";
 
@@ -480,4 +482,198 @@
       set(q.trace, k >= 3 ? 1 : 0, now, inst, 0, 500);
     }
   });
+
+  // ================= third slide: merger, ring and waveform (gw-ring-merger) =================
+  // Left: the binary of the NR run prod_n24 (GW150914-like), drawn soft as on the ringdown
+  // part's merger slide (the drawing code is ported from slides/parts/ringdown/part.js).
+  // Right: a ring of test masses, face-on, moved by dx_i = (1/2) h_ij x_j with
+  // h_+ = h cos 2psi, h_x = h sin 2psi, h = EPS |h_22| / max|h_22|. Bottom: h_+(t) / h up to
+  // the current time, red dot at the current value. All three read one NR time t; the strain
+  // columns are already at the retarded time t - 100 M (assets/gw-ring-merger-data.js).
+  // Stage 0: frame at t = T0. Stage 1: plays once to the end, then holds.
+  (function () {
+    var G = GW_RING_MERGER_DATA;
+    var T0 = G.t0, T1 = G.tEnd;
+    var L = 7.5;              // half-width of the merger view, M
+    var BOX = 720;            // merger canvas, CSS px (square); centre at slide (560, 370)
+    var SC = BOX / (2 * L);   // px per M
+    var RT = 355;             // soft tails tapered to zero at RT px from the view centre
+    var CAP = 3.0, CORE = 0.4, SOFT = 1.5, SOFT_UMAX = 3.3, DS = 3;
+    var RC = [1360, 370], RR = 230;                       // ring centre and radius
+    var TX0 = 180, TX1 = 1740, TY = 885, TA = 110;        // trace axes (as gw-ring-ligo)
+    // Playback speed in M per second: V_FAST in the inspiral, slowing smoothly to V_SLOW
+    // between T_SLOW0 and T_SLOW1 (around the peak of |h_22| at 765.5 M), V_SLOW after.
+    var V_FAST = 70, V_SLOW = 30, T_SLOW0 = 700, T_SLOW1 = 765;
+    var COLS = ["x0", "y0", "x1", "y1", "R1", "R2", "acx", "acy", "A", "ph", "hA", "h2psi"];
+    var NS = G.x0.length;
+
+    function sample(t) {
+      var u = (Math.max(T0, Math.min(T1, t)) - T0) / G.dt;
+      var i = Math.min(Math.floor(u), NS - 2), f = u - i, s = {};
+      COLS.forEach(function (k) { s[k] = G[k][i] * (1 - f) + G[k][i + 1] * f; });
+      return s;
+    }
+
+    // Wall time (s) at each sample, from the speed profile; t(tau) by interpolation.
+    var TAU = [0];
+    function speed(t) {
+      var u = Math.max(0, Math.min(1, (t - T_SLOW0) / (T_SLOW1 - T_SLOW0)));
+      return V_FAST + (V_SLOW - V_FAST) * u * u * (3 - 2 * u);
+    }
+    for (var i = 1; i < NS; i++) {
+      var ta = T0 + (i - 1) * G.dt, tb = ta + G.dt;
+      TAU.push(TAU[i - 1] + G.dt * 0.5 * (1 / speed(ta) + 1 / speed(tb)));
+    }
+    var DUR = TAU[NS - 1];
+    function tOf(tau) {
+      if (tau <= 0) return T0;
+      if (tau >= DUR) return T1;
+      var lo = 0, hi = NS - 1;
+      while (hi - lo > 1) { var mid = (lo + hi) >> 1; if (TAU[mid] <= tau) lo = mid; else hi = mid; }
+      return T0 + G.dt * (lo + (tau - TAU[lo]) / (TAU[hi] - TAU[lo]));
+    }
+
+    // ---- soft merger view, ported from the ringdown part ----
+    function fit(c) {
+      var r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+      var w = Math.max(50, Math.round(r.width * dpr)), h = Math.max(50, Math.round(r.height * dpr));
+      if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+      return w / c.offsetWidth;
+    }
+    function model(t) {
+      var s = sample(t);
+      var w = Math.max(0, Math.min(1, (t - G.tFuse) / (G.tCommon + 10 - G.tFuse)));
+      w = w * w * (3 - 2 * w);
+      var m = { w: w, bh: [[s.x0, s.y0, s.R1], [s.x1, s.y1, s.R2]], rem: null };
+      if (w > 0) {
+        var pcx = (G.m1 * s.x0 + G.m2 * s.x1) / (G.m1 + G.m2);
+        var pcy = (G.m1 * s.y0 + G.m2 * s.y1) / (G.m1 + G.m2);
+        m.rem = [(1 - w) * pcx + w * s.acx, (1 - w) * pcy + w * s.acy, G.Rfinal, G.eps * s.A, s.ph];
+      }
+      return m;
+    }
+    function field(m, X, Y) {
+      var Fb = 0;
+      for (var k = 0; k < 2; k++) {
+        var b = m.bh[k], dx = X - b[0], dy = Y - b[1];
+        Fb += Math.min(b[2] * b[2] / (dx * dx + dy * dy + 1e-12), CAP);
+      }
+      if (!m.rem) return Fb;
+      var r = m.rem, ex = X - r[0], ey = Y - r[1];
+      var rr = r[2] * (1 + r[3] * Math.cos(2 * Math.atan2(ey, ex) + r[4]));
+      return (1 - m.w) * Fb + m.w * Math.min(rr * rr / (ex * ex + ey * ey + 1e-12), CAP);
+    }
+    function softA(q) {
+      if (q <= CORE) return 1;
+      var u = (q - CORE) / SOFT;
+      return u > SOFT_UMAX ? 0 : Math.exp(-Math.pow(u, 1.5));
+    }
+    function taper(rho, Rt) {
+      var u = (rho - 0.75 * Rt) / (0.25 * Rt);
+      return u <= 0 ? 1 : u >= 1 ? 0 : 0.5 * (1 + Math.cos(Math.PI * u));
+    }
+    var layer = null, lastKey = null;
+    function drawBBH(c, t) {
+      var k = fit(c), key = t + ":" + c.width;
+      if (key === lastKey) return;
+      lastKey = key;
+      var W = c.width, H = c.height, w = Math.ceil(W / DS), h = Math.ceil(H / DS);
+      var ctx = c.getContext("2d");
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      if (!layer || layer.width !== w || layer.height !== h) {
+        layer = document.createElement("canvas"); layer.width = w; layer.height = h;
+      }
+      var m = model(t), cw = c.offsetWidth, ch = c.offsetHeight;
+      var lctx = layer.getContext("2d"), img = lctx.createImageData(w, h), p = img.data;
+      for (var j = 0; j < h; j++) {
+        var dy = (j + 0.5) * DS / k - ch / 2;
+        for (var ii = 0; ii < w; ii++) {
+          var dx = (ii + 0.5) * DS / k - cw / 2, tw = taper(Math.sqrt(dx * dx + dy * dy), RT);
+          if (tw <= 0) continue;
+          var F = field(m, dx / SC, -dy / SC);
+          if (F >= 0.03) p[4 * (j * w + ii) + 3] = Math.round(255 * tw * softA(1 / Math.sqrt(F)));
+        }
+      }
+      lctx.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(layer, 0, 0, DS * w, DS * h);
+    }
+
+    // ---- ring and trace, on the full-slide canvas ----
+    function strain(s) { return [EPS * s.hA * Math.cos(s.h2psi), EPS * s.hA * Math.sin(s.h2psi)]; }
+    function drawRing3(ctx, t) {
+      var hh = strain(sample(t)), hp = hh[0], hx = hh[1];
+      ctx.fillStyle = "#000";
+      for (var k = 0; k < N; k++) {
+        var th = 2 * Math.PI * k / N, x = RR * Math.cos(th), y = RR * Math.sin(th);
+        ctx.beginPath();
+        ctx.arc(RC[0] + x + 0.5 * (hp * x + hx * y), RC[1] - (y + 0.5 * (hx * x - hp * y)),
+                DOT, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+    function X(t) { return TX0 + (t - T0) / (T1 - T0) * (TX1 - TX0); }
+    function Y(s) { return TY - TA * s.hA * Math.cos(s.h2psi); }
+    function drawTrace3(ctx, t) {
+      ctx.strokeStyle = "#555"; ctx.fillStyle = "#555"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(TX0, TY + TA + 20); ctx.lineTo(TX0, TY - TA - 30);       // h axis
+      ctx.moveTo(TX0, TY); ctx.lineTo(TX1 + 60, TY);                      // t axis
+      ctx.stroke();
+      arrowHead(ctx, TX0, TY - TA - 34, -Math.PI / 2);
+      arrowHead(ctx, TX1 + 64, TY, 0);
+      ctx.fillStyle = "#000";
+      ctx.font = "italic 40px KaTeX_Math, 'Times New Roman', serif";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "right"; ctx.fillText("h", TX0 - 18, TY - TA - 20);
+      ctx.textAlign = "center"; ctx.fillText("t", TX1 + 64, TY + 36);
+      var n = Math.floor((t - T0) / G.dt + 1e-9), cur = sample(t);
+      ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.lineJoin = "round";
+      ctx.beginPath();
+      for (var i = 0; i <= n && i < NS; i++) {
+        var yy = TY - TA * G.hA[i] * Math.cos(G.h2psi[i]), xx = X(T0 + i * G.dt);
+        if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+      }
+      ctx.lineTo(X(t), Y(cur));
+      ctx.stroke();
+      ctx.fillStyle = "#c00";
+      ctx.beginPath();
+      ctx.arc(X(t), Y(cur), 10, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    var cMain = null, cBBH = null, raf3 = null, playStart = null, tHold = T0;
+    function current(now) { return playStart === null ? tHold : tOf((now - playStart) / 1000); }
+    function frame3(now) {
+      var t = current(now);
+      var ctx = cMain.getContext("2d");
+      ctx.setTransform(2, 0, 0, 2, 0, 0);
+      ctx.clearRect(0, 0, 1920, 1080);
+      drawRing3(ctx, t);
+      drawTrace3(ctx, t);
+      drawBBH(cBBH, t);
+    }
+    function loop3(now) { frame3(now); raf3 = requestAnimationFrame(loop3); }
+    function stop3() { if (raf3) cancelAnimationFrame(raf3); raf3 = null; }
+
+    Deck.widget("gw-ring-merger", {
+      steps: 1,
+      enter: function (slide) {
+        cMain = slide.querySelector("#gw-ring-merger-canvas");
+        cBBH = slide.querySelector("#gw-ring-merger-bbh");
+        lastKey = null;
+        stop3();
+        raf3 = requestAnimationFrame(loop3);
+      },
+      leave: function () { stop3(); playStart = null; tHold = T0; },
+      step: function (slide, k, dir) {
+        // Stage 0: the first frame. Stage 1 forward: play once, then hold on the last frame.
+        // Arriving at stage 1 backwards: the last frame at once.
+        if (k === 0) { playStart = null; tHold = T0; }
+        else if (dir > 0) { playStart = performance.now(); }
+        else { playStart = null; tHold = T1; }
+      }
+    });
+  })();
 })();

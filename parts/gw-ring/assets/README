@@ -16,3 +16,13 @@ ligo_hanford_aerial.jpg
   The slide shows the photo mirrored left-right (in part.js), so that the L is upright:
   corner station at the lower left, one arm to the right, one arm up. The slide carries
   the credit line "Photo: Courtesy Caltech/MIT/LIGO Laboratory (mirrored)".
+
+gw-ring-merger-data.js: data of the third slide (gw-ring-merger). Generated 2026-09-29 by
+  tasks/t03-gw-ring/make_merger_data.py (log make_merger_data_2026-09-29.log) as a trimmed
+  copy (t = 400..860 M, 921 samples, dt = 0.5 M, 92 kB) of
+  slides/parts/ringdown/assets/ringdown-data.js (sha256 da751aa1ce24fdeb...), which
+  tasks/t04-ringdown/make_ringdown_data.py makes from the NR run prod_n24 (Einstein Toolkit,
+  GW150914-like binary): puncture tracks, horizon radii, remnant centre, psi4_22 amplitude
+  and phase, and the strain h_22 (|h_22|/max, and 2 psi = -arg h_22 + C) at t - 100 M.
+  Do not edit by hand. The drawing code of the soft black holes is ported from
+  slides/parts/ringdown/part.js.
