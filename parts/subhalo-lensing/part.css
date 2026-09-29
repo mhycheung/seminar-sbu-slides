@@ -48,3 +48,13 @@
   color: #008000;
   font-weight: bold;
 }
+
+/* "GW231123" label, brown, top left, in the style of the rd-real "real data" label. */
+.subhalo-lensing-kind {
+  position: absolute;
+  top: 30px;
+  left: 50px;
+  color: #8b4513;
+  font-size: 40px;
+  font-weight: bold;
+}

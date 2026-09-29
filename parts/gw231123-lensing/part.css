@@ -188,3 +188,16 @@
 .gw231123-lensing-wtitle:empty {
   visibility: hidden;
 }
+
+/* "GW231123" label, brown, top left, in the style of the rd-real "real data" label. */
+.gw231123-lensing-kind {
+  position: absolute;
+  top: 30px;
+  left: 50px;
+  color: #8b4513;
+  font-size: 40px;
+  font-weight: bold;
+}
+
+/* The population title is long: move it below the "GW231123" label. */
+#gw231123-lensing-pop > h1.title { top: 95px; }
