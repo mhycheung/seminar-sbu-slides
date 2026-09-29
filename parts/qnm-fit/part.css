@@ -52,6 +52,13 @@
   white-space: nowrap;
 }
 
+/* Two credits stacked, right-aligned, so they clear the centred x-axis label (qnm-fit-many44). */
+.qnm-fit-cite-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
 /* "NR simulations" label, gold, top left. */
 .qnm-fit-nr {
   position: absolute;
